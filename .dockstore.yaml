@@ -1,0 +1,11 @@
+version 1.2
+
+workflows:
+ - name: HAPHiR
+   subclass: WDL
+   primaryDescriptorPath: /workflows/wf_haphir.wdl
+   testParameterFiles:
+    - /assets/empty.json
+   authors:
+    - orcid: 0000-0001-7915-9847
+   topic: Hybrid Assembly of PacBio HiFi and Illumina Reads
