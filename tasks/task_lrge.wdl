@@ -13,7 +13,11 @@ task estimate_genome_size {
         lrge --version > VERSION
 
         # find genome size
-        lrge -t ~{cpu} ~{long_fq} -o gsize.txt
+        lrge \
+        -t ~{cpu} 
+        -P pb \
+        ~{long_fq} \
+        -o gsize.txt
     >>>
 
     output {
@@ -24,7 +28,8 @@ task estimate_genome_size {
     runtime {
         docker: "staphb/lrge:0.2.1"
         cpu: cpu
-        memory: "1 GiB"
+        memory: "4 GiB"
+        disks: "local-disk 50 HDD"
         preemptible: 0
         maxRetries: 3
     }
