@@ -1,4 +1,4 @@
-version 1.1
+version 1.0
 
 task estimate_genome_size {
     input {

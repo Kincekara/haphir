@@ -1,4 +1,4 @@
-version 1.1
+version 1.0
 
 import "../tasks/task_pbtk.wdl" as pbtk
 import "../tasks/task_lrge.wdl" as lrge
