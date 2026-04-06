@@ -35,7 +35,7 @@ task flye_asm {
     }
 
     runtime {
-        container: "staphb/flye:2.9.6"
+        docker: "staphb/flye:2.9.6"
         cpu: cpu
         memory: "16 GiB"
         disks: "local-disk 200 SSD"

@@ -36,7 +36,7 @@ task hifiasm_asm {
     }
 
     runtime {
-        container: "staphb/hifiasm:0.25.0"
+        docker: "staphb/hifiasm:0.25.0"
         cpu: cpu
         memory: "32 GiB"
         disks: "local-disk 200 SSD"

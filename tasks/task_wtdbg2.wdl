@@ -34,7 +34,7 @@ task wtdbg2_asm {
     }
 
     runtime {
-        container: "staphb/wtdbg2:2.5"
+        docker: "staphb/wtdbg2:2.5"
         cpu: cpu
         memory: "8 GiB"
         preemptible: 2

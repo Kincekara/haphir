@@ -22,7 +22,7 @@ task estimate_genome_size {
     }
 
     runtime {
-        container: "staphb/lrge:0.2.1"
+        docker: "staphb/lrge:0.2.1"
         cpu: cpu
         memory: "1 GiB"
         preemptible: 0

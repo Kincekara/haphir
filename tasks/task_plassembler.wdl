@@ -40,7 +40,7 @@ task plassembler_asm {
     }
 
     runtime {
-        container: "staphb/plassembler:1.8.2"
+        docker: "staphb/plassembler:1.8.2"
         cpu: cpu
         memory: "16 GiB"
         preemptible: 2

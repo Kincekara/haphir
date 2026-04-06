@@ -64,7 +64,7 @@ task merge_asms {
     }
 
     runtime {
-        container: "staphb/seqkit:2.13.0"
+        docker: "staphb/seqkit:2.13.0"
         cpu: 1
         memory: "1 GiB"
         preemptible: 0

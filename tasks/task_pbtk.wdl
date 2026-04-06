@@ -25,7 +25,7 @@ task bam_to_fastq {
     }
 
     runtime {
-        container: "staphb/pbtk:3.5.0"
+        docker: "staphb/pbtk:3.5.0"
         memory: "4 GiB"
         cpu: 2
         preemptible: 0

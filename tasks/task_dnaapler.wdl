@@ -30,7 +30,7 @@ task reorient {
     }
 
     runtime {
-        container: "staphb/dnaapler:1.3.0"
+        docker: "staphb/dnaapler:1.3.0"
         cpu: cpu
         memory: "1 GiB"
         preemptible: 0

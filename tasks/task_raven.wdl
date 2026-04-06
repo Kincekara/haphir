@@ -29,7 +29,7 @@ task raven_asm {
     }
 
     runtime {
-        container: "quay.io/biocontainers/raven-assembler:1.8.3--h5ca1c30_3"
+        docker: "quay.io/biocontainers/raven-assembler:1.8.3--h5ca1c30_3"
         cpu: cpu
         memory: "16 GiB"
         preemptible: 2
