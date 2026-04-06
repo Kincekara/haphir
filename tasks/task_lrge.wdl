@@ -16,8 +16,8 @@ task estimate_genome_size {
         lrge \
         -P pb \
         -t ~{cpu} \
-        -o gsize.txt \        
-        ~{long_fq}        
+        -o gsize.txt \
+        ~{long_fq}   
     >>>
 
     output {
