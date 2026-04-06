@@ -27,7 +27,8 @@ task bam_to_fastq {
     runtime {
         docker: "staphb/pbtk:3.5.0"
         memory: "4 GiB"
-        cpu: 2
+        cpu: 4
+        disks: "local-disk 200 SSD"
         preemptible: 0
         maxRetries: 3
     }
