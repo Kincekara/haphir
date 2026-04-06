@@ -14,10 +14,10 @@ task estimate_genome_size {
 
         # find genome size
         lrge \
-        -t ~{cpu} 
         -P pb \
-        ~{long_fq} \
-        -o gsize.txt
+        -t ~{cpu} \
+        -o gsize.txt \        
+        ~{long_fq}        
     >>>
 
     output {
