@@ -3,7 +3,7 @@ version 1.0
 task estimate_genome_size {
     input {
         File long_fq
-        Int cpu = 1
+        Int cpu = 2
     }
 
     command <<<
@@ -18,11 +18,15 @@ task estimate_genome_size {
         -t ~{cpu} \
         -o gsize.txt \
         ~{long_fq}   
+
+        # round genome size
+        printf "%dm\n" $(( ($(cat gsize.txt) +500000)/1000000 )) > GSIZE
     >>>
 
     output {
         String lrge_version = read_string("VERSION")
-        String genome_size = read_string("gsize.txt")
+        File lrge_gs = "gsize.txt"
+        String genome_size = read_string("GSIZE")
     }
 
     runtime {

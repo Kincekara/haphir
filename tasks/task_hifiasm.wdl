@@ -13,15 +13,12 @@ task hifiasm_asm {
 
         # version 
         hifiasm --version > VERSION
-
-        # round genome size for hifiasm
-        gsize=$(printf "%dm\n" $(( ("~{genome_size}"+500000)/1000000 )))
     
         # assemble with hifiasm
         hifiasm \
         -o ~{id} \
         -t ~{cpu} \
-        --hg-size "$gsize" \
+        --hg-size ~{genome_size} \
         ~{long_fq} 2> hifiasm.log
 
         # gfa to fasta
