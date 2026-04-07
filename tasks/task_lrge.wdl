@@ -3,7 +3,7 @@ version 1.0
 task estimate_genome_size {
     input {
         File long_fq
-        Int cpu = 2
+        Int cpu = 4
     }
 
     command <<<
@@ -32,7 +32,7 @@ task estimate_genome_size {
     runtime {
         docker: "staphb/lrge:0.2.1"
         cpu: cpu
-        memory: "4 GiB"
+        memory: "8 GiB"
         disks: "local-disk 50 HDD"
         preemptible: 0
         maxRetries: 3
