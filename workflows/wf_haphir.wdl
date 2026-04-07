@@ -208,6 +208,7 @@ workflow haphir {
         # seqkit
         String? seqkit_version = merge_asms.seqkit_version
         File? final_assembly = merge_asms.final_assembly
+        File? seqkit_stats = merge_asms.seqkit_stats
 
     }
 }
