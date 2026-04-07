@@ -4,7 +4,7 @@ task reorient {
     input {
         String id
         File long_asm
-        Int cpu = 1
+        Int cpu = 2
     }
 
     command <<<
@@ -32,7 +32,8 @@ task reorient {
     runtime {
         docker: "staphb/dnaapler:1.3.0"
         cpu: cpu
-        memory: "1 GiB"
+        memory: "8 GiB"
+        disks: "local-disk 50 SSD"
         preemptible: 0
         maxRetries: 3
     }
