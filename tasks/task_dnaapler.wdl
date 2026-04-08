@@ -24,7 +24,7 @@ task reorient {
     >>>
 
     output {
-        String version = read_string("VERSION")
+        String dnaapler_version = read_string("VERSION")
         File reoriented_fasta = "~{id}.dnaapler.fasta"
         File dnaapler_summary = "~{id}.dnaapler_summary.tsv"
     }
