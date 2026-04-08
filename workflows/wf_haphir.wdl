@@ -12,7 +12,8 @@ import "../tasks/task_plassembler.wdl" as plassembler
 import "../tasks/task_fastp.wdl" as fastp
 import "../tasks/task_polypolish.wdl" as polypolish
 import "../tasks/task_dnaapler.wdl" as dnaapler
-import "../tasks/task_seqkit.wdl" as seqkit
+import "../tasks/task_minimap2.wdl" as minimap2
+import "../tasks/task_merge.wdl" as merge
 
 workflow haphir {
     meta {
@@ -37,10 +38,6 @@ workflow haphir {
             description: "Illumina paired-end reads 2",
             patterns: ["*_2.fastq.gz", "*_R2_*.fastq.gz"]
         }
-        polishing: {
-            description: "Polish the long read assembly with short reads",
-            patterns: ["true", "false"]
-        }
     }
 
     input {
@@ -48,7 +45,6 @@ workflow haphir {
         File long_fq
         File? short_fq1
         File? short_fq2
-        Boolean polishing = true
     }
 
     # convert to fastq if bam file is provided
@@ -117,36 +113,15 @@ workflow haphir {
             raven_asm = raven_asm.assembly_fasta
     }
 
-    # dnaapler
-    call dnaapler.reorient {
-        input:
-            id = id,
-            long_asm = combine_asms.assembly_fasta
-    }
-
     # plasmid recovery & polishing
-    if (defined(short_fq1) && defined(short_fq2)) {
-        
+    if (defined(short_fq1) && defined(short_fq2)) {        
         # fastp
         call fastp.trim_pe {
             input:
                 id = id,
                 short_fq1 = short_fq1,
                 short_fq2 = short_fq2
-        }
-
-        # polishing
-        if (polishing) {
-            # polypolish
-            call polypolish.polish {
-                input:
-                    id = id,
-                    draft_asm = reorient.reoriented_fasta,
-                    short_fq1 = trim_pe.short_fq1_trimmed,
-                    short_fq2 = trim_pe.short_fq2_trimmed
-            }
-        }
-        
+        }        
         # plassembler
         call plassembler.plassembler_asm {
             input:
@@ -157,20 +132,45 @@ workflow haphir {
                 flye_asm = flye_asm.assembly_fasta,
                 flye_info = flye_asm.assembly_info
         }
-
-        # final assembly
-        call seqkit.merge_asms {
+    
+        # minimap2
+        call minimap2.label_and_align {
             input:
                 id = id,
-                long_asm = select_first([polish.polished_fasta, reorient.reoriented_fasta]),
+                autocycler_asm = combine_asms.assembly_fasta,
                 plassembler_asm = plassembler_asm.plasmids
         }
+
+        # merge assemblies
+        call merge.merge_asms {
+            input:
+                id = id,
+                autocycler_asm = label_and_align.autocycler_fasta,
+                plassembler_asm = label_and_align.plasmids_fasta,
+                overlaps_paf = label_and_align.overlaps_paf
+        }
+
+        # polypolish
+        call polypolish.polish {
+            input:
+                id = id,
+                draft_asm = merge_asms.merged_fasta,
+                short_fq1 = trim_pe.short_fq1_trimmed,
+                short_fq2 = trim_pe.short_fq2_trimmed
+        }
     } 
+
+    # dnaapler
+    call dnaapler.reorient {
+        input:
+            id = id,
+            long_asm = select_first([polish.polished_fasta, combine_asms.assembly_fasta])
+    }
 
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.1.0"
+        String version = "HAPHiR v0.2.0"
         # pbtk
         String? bam2fastq_version = bam_to_fastq.bam2fastq_version
         # lrge
@@ -200,15 +200,21 @@ workflow haphir {
         File? fastp_report = trim_pe.html_report
         # plassembler
         String? plassembler_version = plassembler_asm.plassembler_version
-        File? plasmids = plassembler_asm.plasmids
-        File? plasmids_graph = plassembler_asm.graph
-        File? plasmids_summary = plassembler_asm.summary
+        File? plassembler_plasmids = plassembler_asm.plasmids
+        File? plassembler_graph = plassembler_asm.graph
+        File? plassembler_summary = plassembler_asm.summary
+        # minimap2
+        String? minimap2_version = label_and_align.minimap_version
+        File? minimap2_report = label_and_align.overlaps_paf
+        # assembly merging 
+        File? merged_fasta = merge_asms.merged_fasta
+        File? merge_summary = merge_asms.merge_summary
         # polypolish
+        String? polypolish_version = polish.polypolish_version
         File? polished_assembly = polish.polished_fasta
-        # seqkit
-        String? seqkit_version = merge_asms.seqkit_version
-        File? final_assembly = merge_asms.final_assembly
-        File? seqkit_stats = merge_asms.seqkit_stats
-
+        # dnaapler
+        String dnaapler_version = reorient.dnaapler_version
+        File dnaapler_summary = reorient.dnaapler_summary
+        File final_assembly = reorient.reoriented_fasta
     }
 }
