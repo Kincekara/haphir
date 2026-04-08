@@ -27,7 +27,7 @@ task polish {
     >>>
 
     output {
-        String version = read_string("VERSION")
+        String polypolish_version = read_string("VERSION")
         File polished_fasta = "~{id}.polished.fasta"
     }
 
