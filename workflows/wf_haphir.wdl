@@ -14,6 +14,7 @@ import "../tasks/task_polypolish.wdl" as polypolish
 import "../tasks/task_dnaapler.wdl" as dnaapler
 import "../tasks/task_minimap2.wdl" as minimap2
 import "../tasks/task_merge.wdl" as merge
+import "../tasks/task_bandage.wdl" as bandage
 
 workflow haphir {
     meta {
@@ -167,6 +168,18 @@ workflow haphir {
             long_asm = select_first([polish.polished_fasta, combine_asms.assembly_fasta])
     }
 
+    call bandage.asm_image {
+        input:
+            id = id,
+            hifiasm_gfa = hifiasm_asm.assembly_graph,
+            flye_gfa = flye_asm.assembly_graph,
+            raven_gfa = raven_asm.assembly_graph,
+            wtdbg2_asm = wtdbg2_asm.assembly_fasta,
+            autocycler_gfa = combine_asms.assembly_graph,
+            plassembler_gfa = plassembler_asm.graph,
+            final_asm = reorient.reoriented_fasta
+    }
+
     # outputs
     output {
         # haphir version
@@ -216,5 +229,8 @@ workflow haphir {
         String dnaapler_version = reorient.dnaapler_version
         File dnaapler_summary = reorient.dnaapler_summary
         File final_assembly = reorient.reoriented_fasta
+        # bandage
+        String bandage_version = asm_image.bandage_version
+        File bandage_html = asm_image.bandage_html
     }
 }
