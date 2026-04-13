@@ -6,6 +6,8 @@ task merge_asms {
         File autocycler_asm
         File plassembler_asm
         File overlaps_paf
+        Float identity_threshold = 0.95
+        Float coverage_threshold = 0.60
     }
 
     command <<<
@@ -67,8 +69,8 @@ task merge_asms {
                 })
         return hits
 
-    def choose_best_match(pl_id, hits, auto_meta, plas_meta):
-        candidates = [h for h in hits if h["ident"] >= ID_THRESH and h["cov"] >= COV_THRESH]
+    def choose_best_match(pl_id, hits, auto_meta, plas_meta, id_thresh, cov_thresh):
+        candidates = [h for h in hits if h["ident"] >= id_thresh and h["cov"] >= cov_thresh]
         if not candidates:
             return None, None
 
@@ -103,6 +105,10 @@ task merge_asms {
         ap.add_argument("--plassembler", required=True)
         ap.add_argument("--paf", required=True)
         ap.add_argument("--out", required=True)
+        ap.add_argument("--identity", type=float, default=ID_THRESH,
+                        help=f"minimum alignment identity threshold (default: {ID_THRESH})")
+        ap.add_argument("--coverage", type=float, default=COV_THRESH,
+                        help=f"minimum alignment coverage threshold (default: {COV_THRESH})")
         args = ap.parse_args()
 
         auto_recs, auto_meta = read_fasta_with_meta(args.autocycler)
@@ -117,7 +123,7 @@ task merge_asms {
 
         for pl_id, pl_rec in plas_recs.items():
             pl_hits = hits.get(pl_id, [])
-            decision, best = choose_best_match(pl_id, pl_hits, auto_meta, plas_meta)
+            decision, best = choose_best_match(pl_id, pl_hits, auto_meta, plas_meta, args.identity, args.coverage)
 
             if decision is None:
                 if is_circular(plas_meta[pl_id]):
@@ -216,15 +222,17 @@ task merge_asms {
         main()
     EOF
 
-        chmod +x merge_plasmids.py
+    chmod +x merge_plasmids.py
 
-        python3 merge_plasmids.py \
-        --autocycler ~{autocycler_asm} \
-        --plassembler ~{plassembler_asm} \
-        --paf ~{overlaps_paf} \
-        --out ~{id}.merged.fasta
+    python3 merge_plasmids.py \
+    --autocycler ~{autocycler_asm} \
+    --plassembler ~{plassembler_asm} \
+    --paf ~{overlaps_paf} \
+    --out ~{id}.merged.fasta \
+    --identity ~{identity_threshold} \
+    --coverage ~{coverage_threshold}
 
-        mv merge_summary.tsv ~{id}.merge_summary.tsv
+    mv merge_summary.tsv ~{id}.merge_summary.tsv
     >>>
 
     output {
