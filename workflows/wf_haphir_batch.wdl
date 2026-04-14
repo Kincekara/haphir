@@ -2,7 +2,7 @@ version 1.0
 
 import "wf_haphir.wdl" as main
 
-workflow haphir_local {
+workflow batch {
     input {
         File samplesheet
         Array[Array[String]] inputSamples = read_tsv(samplesheet)        
