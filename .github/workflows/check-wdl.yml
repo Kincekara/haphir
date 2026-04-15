@@ -27,7 +27,7 @@ jobs:
 
       - name: Validate WDL with MiniWDL
         run: |
-          miniwdl check workflows/wf_haphir_local.wdl
+          miniwdl check workflows/wf_haphir_batch.wdl
           miniwdl check workflows/wf_haphir.wdl
 
   cromwell-check:
