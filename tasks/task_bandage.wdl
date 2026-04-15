@@ -12,9 +12,11 @@ task asm_image {
         File final_asm
     }
 
-    command <<<
+    command <<< 
+        set -euo pipefail
+
         # version
-        Bandage --version > VERSION
+        Bandage --version | cut -d " " -f2 > VERSION
 
         # Bandage
         Bandage image ~{hifiasm_gfa} hifiasm.png
@@ -93,7 +95,7 @@ task asm_image {
     }
 
     runtime {
-        docker: "quay.io/biocontainers/bandage:0.9.0--h9948957_0"
+        docker: "kincekara/bandage:0.9.0"
         cpu: 1
         memory: "1 GiB"
     }
