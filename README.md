@@ -1,6 +1,10 @@
 # HAPHiR: Hybrid Assembly of PacBio HiFi and Illumina Reads
 
-[![CI](https://github.com/yourusername/haphir/actions/workflows/check-wdl.yml/badge.svg)](https://github.com/yourusername/haphir/actions/workflows/check-wdl.yml)
+[![Dockstore](https://img.shields.io/badge/Dockstore-HAPHiR-blue)](https://dockstore.org/workflows/github.com/Kincekara/haphir/HAPHiR)
+[![Terra.bio](https://img.shields.io/badge/Terra.bio-Platform-green)](https://terra.bio/)
+[![Cromwell](https://img.shields.io/badge/Cromwell-Workflow%20Engine-blue)](https://cromwell.readthedocs.io/en/stable/)
+[![MiniWDL](https://img.shields.io/badge/MiniWDL-Workflow%20Engine-yellow)](https://miniwdl.readthedocs.io/en/latest/)
+[![CI](https://github.com/Kincekara/haphir/actions/workflows/check-wdl.yml/badge.svg)](https://github.com/Kincekara/haphir/actions/workflows/check-wdl.yml)
 
 ***This repo is under development!***
 
@@ -17,7 +21,9 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 - **Plasmid recovery**: Dedicated plasmid assembly and recovery using Plassembler
 - **Flexible inputs**: Accepts PacBio BAM or FASTQ files, automatically converts as needed
 - **Quality control**: Includes read trimming, genome size estimation, and coverage normalization
-- **Polishing**: Optional short-read polishing with Polypolish 
+- **Polishing**: Short-read polishing with Polypolish 
+- **Annotation**: Optional standardized annotation with Bakta
+- **Antimicrobial resistance detection**: Optional AMR analysis with AmrFinderPlus
 - **Cloud-ready**: Designed for scalable execution on Terra
 - **Containerized**: All tools run in Docker containers for reproducibility
 
@@ -25,122 +31,117 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 
 ### Prerequisites
 
+- Docker or another supported container runtime
+- `miniwdl` for local workflow execution
+- Java 8+ for Cromwell/WOMtool validation
+- Optional: Terra account for cloud execution
 
 ### Single Sample Assembly
 
+Use the single-sample workflow `workflows/wf_haphir.wdl`:
+
+```bash
+miniwdl run workflows/wf_haphir.wdl \
+  id=sample1 \
+  long_fq=sample1.hifi.fastq.gz \
+  short_fq1=sample1.R1.fastq.gz \
+  short_fq2=sample1.R2.fastq.gz
+```
+
+If `long_fq` is a BAM file, HAPHiR will automatically convert it to FASTQ before assembly.
 
 ### Batch Processing
 
+Use `workflows/wf_haphir_batch.wdl` with a TSV sample sheet.
+
+Example `samples.tsv` formats:
+
+```
+# HiFi-only samples
+sample1	/path/to/sample1.hifi.fastq.gz
+sample2	/path/to/sample2.hifi.fastq.gz
+
+# Hybrid samples
+sample3	/path/to/sample3.hifi.fastq.gz	/path/to/sample3.R1.fastq.gz	/path/to/sample3.R2.fastq.gz
+```
+
+Run the batch workflow:
+
+```bash
+miniwdl run workflows/wf_haphir_batch.wdl samplesheet=samples.tsv
+```
+
 ## Input Files
 
-### Single Sample Workflow (`wf_haphir.wdl`)
+### Single Sample Workflow (`workflows/wf_haphir.wdl`)
 
 | Input | Type | Description |
 |-------|------|-------------|
 | `id` | String | Sample identifier |
 | `long_fq` | File | PacBio HiFi reads (FASTQ or BAM) |
-| `short_fq1` | File (optional) | Illumina forward reads |
-| `short_fq2` | File (optional) | Illumina reverse reads |
-| `polishing` | Boolean | Enable Illumina polishing (default: true) |
+| `short_fq1` | File? | Illumina forward reads (optional) |
+| `short_fq2` | File? | Illumina reverse reads (optional) |
+| `organism` | String? | Taxonomic name used for annotation (optional) |
+| `bakta_annotation` | Boolean | Run Bakta annotation (default: false) |
+| `amrfinder` | Boolean | Run AmrFinderPlus AMR detection (default: true) |
 
-### Batch Workflow (`wf_haphir_local.wdl`)
+### Batch Workflow (`workflows/wf_haphir_batch.wdl`)
 
-Provide a TSV file with sample information:
-
-```
-# HiFi-only (2 columns)
-sample1	path/to/sample1.hifi.fastq
-sample2	path/to/sample2.hifi.fastq
-
-# Hybrid (4 columns)
-sample3	path/to/sample3.hifi.fastq	path/to/sample3.R1.fastq	path/to/sample3.R2.fastq
-```
+- `samplesheet` — a TSV file parsed by `read_tsv(samplesheet)`
+- Each row may contain either 2 columns (`id`, `long_fq`) or 4 columns (`id`, `long_fq`, `short_fq1`, `short_fq2`)
 
 ## Pipeline Overview
 
-1. **Input Processing**: Convert BAM to FASTQ if needed
-2. **Genome Characterization**: Estimate genome size and normalize coverage to  ~100X
-3. **Parallel Assembly**: Run 4 long-read assemblers simultaneously
-4. **Consensus Generation**: Combine assemblies using Autocycler
-5. **Reorientation**: Orient assembly to DnaA origin using Dnaapler
-6. **Polishing**: Optional short-read polishing with Polypolish
-7. **Plasmid Recovery**: Assemble plasmids using Plassembler
-8. **Final Assembly**: Merge chromosome and plasmids
+1. Convert input BAM to FASTQ if needed using `pbtk`
+2. Estimate genome size with `lrge`
+3. Downsample reads with `rasusa` for consistent long-read coverage
+4. Run Flye, Hifiasm, Wtdbg2, and Raven in parallel
+5. Generate a consensus assembly using `Autocycler`
+6. Recover plasmids with `Plassembler` when paired-end Illumina reads are provided
+7. Map plasmids to long read consensus with `Minimap2`, filter and merge plasmids.
+8. Polish with `Polypolish` when short reads are available
+9. Reorient the final assembly with `dnaapler`
+10. Create assembly visualizations with `Bandage`
+11. Optionally run `Bakta` annotation and `AmrFinderPlus` AMR detection
 
 ## Output Files
 
-All outputs are prefixed with the sample ID:
+Primary outputs exposed by the workflow:
 
-- `{id}.final_assembly.fasta` - Complete assembly (chromosome + plasmids)
-- `{id}.seqkit.stats.txt` - Assembly statistics
-- `{id}.plasmids.fasta` - Recovered plasmid sequences
-- `{id}.polished.fasta` - Polished assembly (if polishing enabled)
-- `{id}.dnaapler.fasta` - Reoriented assembly
-- `{id}.autocycler.fasta` - Consensus assembly
-- Individual assembler outputs and intermediate files
+| Output | Description |
+|------|-------------|
+| `final_assembly` | Final reoriented consensus FASTA |
+| `dnaapler_summary` | Dnaapler orientation report |
+| `autocycler_assembly` | Consensus assembly FASTA from Autocycler |
+| `autocycler_graph` | Autocycler assembly graph |
+| `asm_viz` | Assembly comparison and visualization |
+| `fastp_report` | Fastp trimming report (when paired reads are provided) |
+| `plassembler_plasmids` | Recovered plasmid FASTA |
+| `plassembler_graph` | Plassembler assembly graph |
+| `plassembler_summary` | Plassembler summary report |
+| `minimap2_report` | Minimap2 overlap report |
+| `merge_summary` | Assembly merge decisions summary |
+| `bakta_outputs` | Bakta annotation outputs |
+| `amrfinder_report` | AmrFinderPlus report |
+| `program_versions` | Captured tool version strings |
 
-## Tools and Versions
+> Some outputs are only generated when paired Illumina reads are provided or when annotation/AMR detection is enabled.
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Flye | 2.9.6 | Long-read assembler |
-| HiFiASM | 0.25.0 | HiFi-optimized assembler |
-| Wtdbg2 | 2.5 | De Bruijn graph assembler |
-| Raven | 1.8.3 | Modern graph-based assembler |
-| Autocycler | 0.6.1 | Assembly consensus |
-| Dnaapler | 1.3.0 | Assembly reorientation |
-| Polypolish | 0.6.1 | Short-read polishing |
-| Plassembler | 1.8.2 | Plasmid assembly |
-| Fastp | 1.1.0 | Read trimming |
-| Seqkit | 2.13.0 | Sequence manipulation |
-| LRGE | 0.2.1 | Genome size estimation |
-| Rasusa | 3.0.0 | Coverage normalization |
-
-## Computing Requirements
-
-- **Hifiasm**: 16 CPU, 32GB RAM (most resource-intensive)
-- **Other assemblers**: 8 CPU, 16GB RAM
-- **Storage**: 200GB SSD recommended for large genomes
-- **Runtime**: 2-8 hours depending on genome size and compute resources
-
-## Configuration
-
-The pipeline is designed to run on various platforms:
-
-- **Local execution**: Miniwdl + Docker
-- **Cloud platforms**: Terra
-- **HPC clusters**: Cromwell + Singularity
-
-## Validation
-
-The repository includes automated validation:
-
-- WDL syntax checking with MiniWDL
-- Cromwell workflow validation
-- CI/CD pipeline for pull requests
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome. Please:
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add/update tests if applicable
+3. Add or update code, workflows, or documentation
+4. Validate changes locally
 5. Submit a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Citation
-
-If you use HAPHiR in your research, please cite:
-
-```
-
-```
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Support
 
-For issues, questions, or feature requests, please open an issue on GitHub.
+For questions or issues, please open an issue on GitHub.
