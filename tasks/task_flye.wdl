@@ -19,12 +19,12 @@ task flye_asm {
         --threads ~{cpu} \
         --pacbio-hifi ~{long_fq} \
         --genome-size ~{genome_size} \
-        --out-dir out
+        --out-dir flye_out
 
         # rename outputs
-        mv ./out/assembly.fasta ~{id}.flye.fasta
-        mv ./out/assembly_graph.gfa ~{id}.flye.gfa
-        mv ./out/assembly_info.txt ~{id}.flye_info.txt
+        mv ./flye_out/assembly.fasta ~{id}.flye.fasta
+        mv ./flye_out/assembly_graph.gfa ~{id}.flye.gfa
+        mv ./flye_out/assembly_info.txt ~{id}.flye_info.txt
     >>>
 
     output {
