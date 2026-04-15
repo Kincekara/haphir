@@ -10,7 +10,7 @@ task estimate_genome_size {
         set -euo pipefail
 
         # version 
-        lrge --version > VERSION
+        lrge --version | cut -d " " -f2 > VERSION
 
         # find genome size
         lrge \

@@ -12,7 +12,7 @@ task trim_pe {
         set -euo pipefail
 
         # version 
-        fastp --version > VERSION
+        fastp --version | cut -d " " -f2 > VERSION
 
         # trim reads with fastp
         fastp \

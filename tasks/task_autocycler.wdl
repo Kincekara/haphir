@@ -13,7 +13,7 @@ task combine_asms {
         set -euo pipefail
 
         # version
-        autocycler --version > VERSION
+        autocycler --version | cut -d " " -f2 > VERSION
 
         # collect assemblies
         mkdir assemblies

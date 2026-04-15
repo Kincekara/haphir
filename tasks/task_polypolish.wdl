@@ -13,7 +13,7 @@ task polish {
         set -euo pipefail
 
         # version 
-        polypolish --version > VERSION
+        polypolish --version | cut -d " " -f2 > VERSION
 
         # index    
         bwa index ~{draft_asm}

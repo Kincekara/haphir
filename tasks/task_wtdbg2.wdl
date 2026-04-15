@@ -12,7 +12,7 @@ task wtdbg2_asm {
         set -euo pipefail
 
         # version 
-        wtdbg2 --version > VERSION
+        wtdbg2 --version | cut -d " " -f2 > VERSION
 
         # assemble with wtdb2
         wtdbg2 \

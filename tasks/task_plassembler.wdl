@@ -15,7 +15,7 @@ task plassembler_asm {
         set -euo pipefail
 
         # version 
-        plassembler --version > VERSION
+        plassembler --version | cut -d " " -f3 | tr -d "\n" > VERSION
 
         # plassembler
         plassembler run \

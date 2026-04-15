@@ -11,7 +11,7 @@ task reorient {
         set -euo pipefail
 
         # version 
-        dnaapler --version > VERSION
+        dnaapler --version | cut -d " " -f3 > VERSION
 
         # reorient assembly with dnaapler
         dnaapler all \
