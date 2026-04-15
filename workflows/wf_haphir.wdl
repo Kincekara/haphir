@@ -43,7 +43,7 @@ workflow haphir {
         }
         organism: {
             description: "taxonomic name of the organism",
-            patterns: ["^[A-Z][a-z]+ [a-z]+$", "^[A-Z][a-z]+ [a-z]+( [a-z]+\.? [a-z0-9-]+)?$"]}
+            patterns: ["^[A-Z][a-z]+ [a-z]+$", "^[A-Z][a-z]+ [a-z]+( [a-z]+\.? [a-z0-9-]+)?$"]
         }
         bakta_annotation: {
             description: "Run bakta for annotation",
