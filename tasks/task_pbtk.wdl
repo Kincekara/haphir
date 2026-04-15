@@ -10,7 +10,7 @@ task bam_to_fastq {
         set -euo pipefail
 
         # bam2fastq version
-        bam2fastq --version | head -n 1 > VERSION
+        bam2fastq --version | head -n 1 | cut -d " " -f2 > VERSION
 
         # index file
         pbindex ~{bam}
