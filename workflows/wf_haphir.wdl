@@ -15,6 +15,8 @@ import "../tasks/task_dnaapler.wdl" as dnaapler
 import "../tasks/task_minimap2.wdl" as minimap2
 import "../tasks/task_merge.wdl" as merge
 import "../tasks/task_bandage.wdl" as bandage
+import "../tasks/task_bakta.wdl" as bakta
+import "../tasks/task_amrfinderplus.wdl" as amrfinderplus
 
 workflow haphir {
     meta {
@@ -39,6 +41,20 @@ workflow haphir {
             description: "Illumina paired-end reads 2",
             patterns: ["*_2.fastq.gz", "*_R2_*.fastq.gz"]
         }
+        organism: {
+            description: "taxonomic name of the organism",
+            patterns: ["^[A-Z][a-z]+ [a-z]+$", "^[A-Z][a-z]+ [a-z]+( [a-z]+\.? [a-z0-9-]+)?$"]}
+        }
+        bakta_annotation: {
+            description: "Run bakta for annotation",
+            patterns: ["true", "false"],
+            default: "false"
+        }
+        amrfinder: {
+            description: "Run amrfinder for antibiotic resistance gene detection",
+            patterns: ["true", "false"],
+            default: "true"
+        }
     }
 
     input {
@@ -46,6 +62,9 @@ workflow haphir {
         File long_fq
         File? short_fq1
         File? short_fq2
+        String? organism
+        Boolean bakta_annotation = false
+        Boolean amrfinder = true
     }
 
     # convert to fastq if bam file is provided
@@ -168,6 +187,7 @@ workflow haphir {
             long_asm = select_first([polish.polished_fasta, combine_asms.assembly_fasta])
     }
 
+    # bandage
     call bandage.asm_image {
         input:
             id = id,
@@ -180,57 +200,69 @@ workflow haphir {
             final_asm = reorient.reoriented_fasta
     }
 
+    if ( bakta_annotation  || amrfinder ) {
+        call bakta.annotation {
+            input:
+                id = id,
+                final_asm = reorient.reoriented_fasta,
+                organism = organism
+        }
+    }
+
+    if ( amrfinder ) {
+        call amrfinderplus.amr {
+            input:
+                id = id,
+                assembly = annotation.bakta_fna,
+                bakta_faa = annotation.bakta_faa,
+                bakta_gff = annotation.bakta_gff,
+                organism = organism
+        }
+    }
+
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.2.0"
-        # pbtk
-        String? bam2fastq_version = bam_to_fastq.bam2fastq_version
-        # lrge
-        String lrge_version = estimate_genome_size.lrge_version
-        String genome_size = estimate_genome_size.genome_size
-        # flye
-        String flye_version = flye_asm.flye_version
-        File flye_assembly = flye_asm.assembly_fasta
-        File flye_graph = flye_asm.assembly_graph
-        # hifiasm
-        String hifiasm_version = hifiasm_asm.hifiasm_version
-        File hifiasm_assembly = hifiasm_asm.assembly_fasta
-        File hifiasm_graph = hifiasm_asm.assembly_graph
-        # wtdb2
-        String wtdbg2_version = wtdbg2_asm.wtdbg2_version
-        File wtdb2_assembly = wtdbg2_asm.assembly_fasta
-        # raven
-        String raven_version = raven_asm.raven_version
-        File raven_assembly = raven_asm.assembly_fasta
-        File raven_graph = raven_asm.assembly_graph
+        String version = "HAPHiR v0.3.0"
         # autocycler
-        String autocycler_version = combine_asms.autocycler_version
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
         # fastp
-        String? fastp_version = trim_pe.fastp_version
         File? fastp_report = trim_pe.html_report
         # plassembler
-        String? plassembler_version = plassembler_asm.plassembler_version
         File? plassembler_plasmids = plassembler_asm.plasmids
         File? plassembler_graph = plassembler_asm.graph
         File? plassembler_summary = plassembler_asm.summary
         # minimap2
-        String? minimap2_version = label_and_align.minimap_version
         File? minimap2_report = label_and_align.overlaps_paf
         # assembly merging 
-        File? merged_fasta = merge_asms.merged_fasta
         File? merge_summary = merge_asms.merge_summary
-        # polypolish
-        String? polypolish_version = polish.polypolish_version
-        File? polished_assembly = polish.polished_fasta
         # dnaapler
-        String dnaapler_version = reorient.dnaapler_version
         File dnaapler_summary = reorient.dnaapler_summary
         File final_assembly = reorient.reoriented_fasta
         # bandage
-        String bandage_version = asm_image.bandage_version
-        File bandage_html = asm_image.bandage_html
+        File asm_viz = asm_image.bandage_html
+        # bakta
+        File? bakta_outputs = annotation.bakta_outputs
+        # amrfinderplus
+        File? amrfinder_report = amr.amrfinder_report
+        # program versions
+        Array[String] program_versions = [ "bam2fastq: " + select_first([bam_to_fastq.bam2fastq_version, "NA"]),
+                                "lrge: " + estimate_genome_size.lrge_version,
+                                "flye: " + flye_asm.flye_version,
+                                "hifiasm: " + hifiasm_asm.hifiasm_version,
+                                "wtdbg2: " + wtdbg2_asm.wtdbg2_version,
+                                "raven: " + raven_asm.raven_version,
+                                "autocycler: " + combine_asms.autocycler_version,
+                                "fastp: " + select_first([trim_pe.fastp_version, "NA"]),
+                                "plassembler: " + select_first([plassembler_asm.plassembler_version, "NA"]),
+                                "minimap2: " + select_first([label_and_align.minimap_version, "NA"]),
+                                "polypolish: " + select_first([polish.polypolish_version, "NA"]),
+                                "dnaapler: " + reorient.dnaapler_version,
+                                "bandage: " + asm_image.bandage_version,
+                                "bakta: " + select_first([annotation.bakta_version, "NA"]),
+                                "amrfinderplus: " + select_first([amr.amrfinder_version, "NA"])
+                                ]
+        
     }
 }
