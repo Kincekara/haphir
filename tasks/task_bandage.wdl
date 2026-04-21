@@ -68,10 +68,10 @@ task asm_image {
                         <div class="caption">Autocycler</div>
                         <img src="data:image/png;base64,$(base64 -w 0 autocycler.png)" alt="Autocycler" />
                     </div>
-                    <!-- <div class="grid-item">
+                    <!--<div class="grid-item">
                         <div class="caption">Plassembler</div>
-                        <img src="data:image/png;base64,$(base64 -w 0 final.png)" alt="final_asm">
-                    </div> -->
+                        <img src="data:image/png;base64,$(base64 -w 0 plassembler.png)" alt="Plassembler">
+                    </div>-->
                 </div>
                 <br><br>
                 <h2>Final Assembly</h2>
