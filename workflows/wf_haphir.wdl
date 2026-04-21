@@ -53,7 +53,7 @@ workflow haphir {
         amrfinder: {
             description: "Run amrfinder for antibiotic resistance gene detection",
             patterns: ["true", "false"],
-            default: "true"
+            default: "false"
         }
     }
 
@@ -64,7 +64,7 @@ workflow haphir {
         File? short_fq2
         String? organism
         Boolean bakta_annotation = false
-        Boolean amrfinder = true
+        Boolean amrfinder = false
     }
 
     # convert to fastq if bam file is provided
@@ -223,7 +223,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.3.0"
+        String version = "HAPHiR v0.3.1"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
