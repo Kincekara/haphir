@@ -223,7 +223,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.3.1"
+        String version = "HAPHiR v0.3.2"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
