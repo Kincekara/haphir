@@ -95,7 +95,7 @@ task asm_image {
     }
 
     runtime {
-        docker: "kincekara/bandage:0.9.0"
+        docker: "staphb/bandage:0.9.0"
         cpu: 1
         memory: "1 GiB"
     }
