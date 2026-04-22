@@ -134,13 +134,21 @@ workflow haphir {
     }
 
     # plasmid recovery & polishing
-    if (defined(short_fq1) && defined(short_fq2)) {        
+    if (defined(short_fq1) && defined(short_fq2)) { 
+        # rasusa
+        call rasusa.downsample_pe {
+            input:
+                id = id,
+                short_fq1 = short_fq1,
+                short_fq2 = short_fq2,
+                genome_size = estimate_genome_size.genome_size
+        }
         # fastp
         call fastp.trim_pe {
             input:
                 id = id,
-                short_fq1 = short_fq1,
-                short_fq2 = short_fq2
+                short_fq1 = downsample_pe.ds_short_fq1,
+                short_fq2 = downsample_pe.ds_short_fq2
         }        
         # plassembler
         call plassembler.plassembler_asm {
@@ -223,7 +231,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.3.2"
+        String version = "HAPHiR v0.4.0"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
