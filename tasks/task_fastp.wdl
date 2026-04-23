@@ -43,7 +43,7 @@ task trim_pe {
     }
 
     runtime {
-        docker: "staphb/fastp:1.1.0"
+        docker: "staphb/fastp:1.3.2"
         cpu: cpu
         memory: "4 GiB"
         preemptible: 0
