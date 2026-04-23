@@ -51,7 +51,7 @@ task annotation {
     }
 
     runtime {
-        docker: "staphb/bakta:1.11.4-6.0-light"
+        docker: "staphb/bakta:1.12.0-6.0-light"
         cpu: cpu
         memory: "8 GiB"
     }
