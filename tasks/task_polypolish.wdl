@@ -21,9 +21,13 @@ task polish {
         bwa mem -t ~{cpu} -a ~{draft_asm} ~{short_fq1} > alignments_1.sam
         bwa mem -t ~{cpu} -a ~{draft_asm} ~{short_fq2} > alignments_2.sam
         # filter
-        polypolish filter --in1 alignments_1.sam --in2 alignments_2.sam --out1 filtered_1.sam --out2 filtered_2.sam
-        # polish
-        polypolish polish ~{draft_asm} filtered_1.sam filtered_2.sam > ~{id}.polished.fasta
+        if polypolish filter --in1 alignments_1.sam --in2 alignments_2.sam --out1 filtered_1.sam --out2 filtered_2.sam; then
+            # polish with filtered alignments
+            polypolish polish ~{draft_asm} filtered_1.sam filtered_2.sam > ~{id}.polished.fasta
+        else
+            # polish with unfiltered alignments if filter fails
+            polypolish polish ~{draft_asm} alignments_1.sam alignments_2.sam > ~{id}.polished.fasta
+        fi
     >>>
 
     output {
