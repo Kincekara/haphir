@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-Merge autocycler and plassembler outputs
+Merge autocycler and plassembler outputs, grouping alignments by (query, target)
 Date: 2026-04-08
 
 @author: Kutluhan Incekara
@@ -61,17 +61,24 @@ def read_fasta_with_meta(path):
         meta[rec.id] = parse_header_meta(rec.description)
     return records, meta
 
-def parse_paf(paf_path):
-    """Parse PAF (Pairwise Alignment Format) file from sequence alignment tool.
+
+
+def parse_paf_grouped(paf_path):
+    """Parse PAF file and group alignments by (query, target) pairs.
+    
+    Aggregates multiple alignments between the same query-target pair by:
+    - Summing alignment lengths and matching bases
+    - Computing combined identity (total_matches / total_alignment_length)
+    - Computing combined coverage (total_alignment_length / shorter_sequence_length)
     
     Args:
         paf_path: Path to PAF file containing alignment results
         
     Returns:
-        Dictionary mapping query sequence ID to list of alignment hits
-        Each hit contains target info, alignment metrics, identity, and coverage
+        Dictionary mapping (query, target) tuples to aggregated alignment info
     """
-    hits = defaultdict(list)  # Group all hits by query sequence
+    grouped = {}  # Key: (qname, tname), Value: aggregated stats
+    
     with open(paf_path) as f:
         for line in f:
             if not line.strip():
@@ -82,25 +89,55 @@ def parse_paf(paf_path):
             qlen = int(cols[1])  # Query sequence length
             tname = cols[5]      # Target sequence name
             tlen = int(cols[6])  # Target sequence length
-            aln_len = int(cols[9])   # Alignment block length
-            matches = int(cols[10])  # Number of matching bases
+            matches = int(cols[9])  # Number of matching bases
+            aln_len = int(cols[10]) # Alignment block length
 
             if aln_len == 0:
                 continue
 
-            # Calculate alignment quality metrics
-            ident = matches / aln_len  # Identity: % of bases that match
-            cov = aln_len / min(qlen, tlen)  # Coverage: fraction of shorter sequence aligned
+            key = (qname, tname)
+            
+            if key not in grouped:
+                grouped[key] = {
+                    "qname": qname,
+                    "tname": tname,
+                    "qlen": qlen,
+                    "tlen": tlen,
+                    "total_aln_len": 0,
+                    "total_matches": 0,
+                }
+            
+            grouped[key]["total_aln_len"] += aln_len
+            grouped[key]["total_matches"] += matches
+    
+    # Compute combined identity and coverage for each group
+    results = {}
+    for key, stats in grouped.items():
+        total_aln = stats["total_aln_len"]
+        total_match = stats["total_matches"]
+        
+        if total_aln > 0:
+            combined_ident = total_match / total_aln
+            combined_cov = total_aln / min(stats["qlen"], stats["tlen"])
+        else:
+            combined_ident = 0
+            combined_cov = 0
+        
+        results[key] = {
+            "query": stats["qname"],
+            "target": stats["tname"],
+            "query_len": stats["qlen"],
+            "target_len": stats["tlen"],
+            "total_alignment_length": total_aln,
+            "total_matches": total_match,
+            "combined_identity": combined_ident,
+            "combined_coverage": combined_cov,
+        }
+    
+    return results
 
-            hits[qname].append({
-                "target": tname,
-                "qlen": qlen,
-                "tlen": tlen,
-                "aln_len": aln_len,
-                "ident": ident,  # Alignment identity (0-1)
-                "cov": cov,      # Alignment coverage (0-1)
-            })
-    return hits
+
+
 
 def choose_best_match(pl_id, hits, auto_meta, plas_meta, id_thresh, cov_thresh):
     """Choose which assembly (plassembler or autocycler) to use for overlapping plasmids.
@@ -120,13 +157,21 @@ def choose_best_match(pl_id, hits, auto_meta, plas_meta, id_thresh, cov_thresh):
         cov_thresh: Minimum coverage threshold
         
     Returns:
-        Tuple of (decision, best_hit) where decision is a string indicating which
-        assembly to use, or None if no match meets thresholds
+        Tuple of (decision, best_hit, meets_thresh) where decision is a string indicating which
+        assembly to use, best_hit is alignment info (even if thresholds not met), and meets_thresh
+        is boolean indicating if best_hit meets quality thresholds
     """
+    # Find best hit regardless of thresholds (for reporting)
+    if not hits:
+        return None, None, False
+    
+    hits_sorted = sorted(hits, key=lambda h: (h["cov"], h["ident"]), reverse=True)
+    best_overall = hits_sorted[0]
+    
     # Filter hits that meet quality thresholds
     candidates = [h for h in hits if h["ident"] >= id_thresh and h["cov"] >= cov_thresh]
     if not candidates:
-        return None, None
+        return None, best_overall, False
 
     # Sort by coverage first (primary), then identity (secondary), in descending order
     candidates.sort(key=lambda h: (h["cov"], h["ident"]), reverse=True)
@@ -147,39 +192,82 @@ def choose_best_match(pl_id, hits, auto_meta, plas_meta, id_thresh, cov_thresh):
 
     # Decision 1: If only one is circular, prefer the circular one
     if plas_circ and not auto_circ:
-        return ("plassembler", best)
+        return ("plassembler", best, True)
     if auto_circ and not plas_circ:
-        return ("autocycler", best)
+        return ("autocycler", best, True)
 
     # Decision 2: Both circular or both non-circular - prefer longer sequence
     if plas_len > auto_len:
-        return ("plassembler", best)
+        return ("plassembler", best, True)
     if auto_len > plas_len:
-        return ("autocycler", best)
+        return ("autocycler", best, True)
 
     # Decision 3: Same length - prefer autocycler by default
-    return ("autocycler_same_len", best)
+    return ("autocycler_same_len", best, True)
+
+def grouped_to_hits(grouped_alignments, query_id):
+    """Convert grouped alignment data to hits format for a specific query.
+    
+    Extracts all (query, target) pairs for a given query ID and converts them
+    to the hit format expected by choose_best_match().
+    
+    Args:
+        grouped_alignments: Dictionary from parse_paf_grouped()
+        query_id: The query sequence ID to extract hits for
+        
+    Returns:
+        List of hit dictionaries with keys: target, qlen, tlen, ident, cov
+    """
+    hits = []
+    for (query, target), stats in grouped_alignments.items():
+        if query == query_id:
+            hits.append({
+                "target": target,
+                "qlen": stats["query_len"],
+                "tlen": stats["target_len"],
+                "ident": stats["combined_identity"],
+                "cov": stats["combined_coverage"],
+            })
+    return hits
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--autocycler", required=True)
-    ap.add_argument("--plassembler", required=True)
-    ap.add_argument("--paf", required=True)
-    ap.add_argument("--out", required=True)
+    ap = argparse.ArgumentParser(
+        description="Merge plasmids from plassembler and autocycler, grouping alignments by (query, target) pairs",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+        Example:
+            %(prog)s --autocycler auto.fasta --plassembler plas.fasta \\
+                    --paf alignments.paf --out merged.fasta
+        """
+    )
+    ap.add_argument("--autocycler", required=True,
+                    help="Autocycler FASTA file")
+    ap.add_argument("--plassembler", required=True,
+                    help="Plassembler FASTA file")
+    ap.add_argument("--paf", required=True,
+                    help="PAF alignment file")
+    ap.add_argument("--out", required=True,
+                    help="Output merged FASTA file")
     ap.add_argument("--identity", type=float, default=ID_THRESH,
                     help=f"minimum alignment identity threshold (default: {ID_THRESH})")
     ap.add_argument("--coverage", type=float, default=COV_THRESH,
                     help=f"minimum alignment coverage threshold (default: {COV_THRESH})")
     args = ap.parse_args()
 
-    # Read input files: autocycler and plassembler assemblies, plus alignment results
+    # Import BioPython for FASTA handling
+    from Bio import SeqIO
+    
+    # Parse grouped PAF alignments
+    grouped = parse_paf_grouped(args.paf)
+
+    # Read input files: autocycler and plassembler assemblies
     auto_recs, auto_meta = read_fasta_with_meta(args.autocycler)
     plas_recs, plas_meta = read_fasta_with_meta(args.plassembler)
-    hits = parse_paf(args.paf)  # Alignments between plassembler and autocycler sequences
 
     # Track which sequences to include in final output
     chosen_autocycler = set(auto_recs.keys())  # Start with all autocycler sequences
-    extra_plassembler = []  # Plassembler sequences to include in final output
+    autocycler_choices = {}  # Map autocycler ID to (chosen_plassembler_ID, best_alignment_info)
+    extra_plassembler = {}  # Map plassembler ID to (best_match_info) for candidates to include
     updated_auto_meta = {k: dict(v) for k, v in auto_meta.items()}  # Copy of autocycler metadata to potentially update
 
     # Track decisions for summary report
@@ -188,18 +276,28 @@ def main():
     # Process each plassembler plasmid to decide inclusion in final output
     for pl_id, pl_rec in plas_recs.items():
         # Find all alignments for this plassembler plasmid against autocycler sequences
-        pl_hits = hits.get(pl_id, [])
-        decision, best = choose_best_match(pl_id, pl_hits, auto_meta, plas_meta, args.identity, args.coverage)
+        pl_hits = grouped_to_hits(grouped, pl_id)
+        decision, best, meets_thresh = choose_best_match(pl_id, pl_hits, auto_meta, plas_meta, args.identity, args.coverage)
 
         # Handle case where plassembler plasmid doesn't match any autocycler sequence
         if decision is None:
+            # best will contain the best hit even if it doesn't meet thresholds
+            if best:
+                ident_str = f"{best['ident']:.4f}"
+                cov_str = f"{best['cov']:.4f}"
+                target = best["target"]
+            else:
+                ident_str = "-"
+                cov_str = "-"
+                target = "-"
+            
             # Keep circular plasmids without matches (likely real plasmids missed by autocycler)
             if is_circular(plas_meta[pl_id]):
-                extra_plassembler.append(pl_id)
-                decision_rows.append([pl_id, "-", "-", "-", "kept_plassembler","no similar hit; circular plasmid"])
+                extra_plassembler[pl_id] = None
+                decision_rows.append([pl_id, target, ident_str, cov_str, "kept_plassembler","no similar hit; circular plasmid"])
             else:
                 # Discard non-circular plasmids without matches (likely spurious)
-                decision_rows.append([pl_id, "-", "-", "-", "ignored","no similar hit; non-circular"])
+                decision_rows.append([pl_id, target, ident_str, cov_str, "ignored","no similar hit; non-circular"])
             continue
 
         # Get the matching autocycler sequence
@@ -207,10 +305,21 @@ def main():
 
         # Case 1: Plassembler version is better (circular and autocycler isn't, or longer)
         if decision == "plassembler":
-            # Remove autocycler version from output (use plassembler instead)
-            if target in chosen_autocycler:
-                chosen_autocycler.remove(target)
-            extra_plassembler.append(pl_id)  # Add plassembler version to output
+            # Compare with existing choice for same autocycler, keep the best match
+            if target in autocycler_choices:
+                # Get the previous candidate's alignment info
+                prev_pl_id, prev_best = autocycler_choices[target]
+                # Compare by coverage first (primary), then identity (secondary)
+                if (best["cov"], best["ident"]) > (prev_best["cov"], prev_best["ident"]):
+                    # New candidate is better, replace previous choice
+                    del extra_plassembler[prev_pl_id]
+                    autocycler_choices[target] = (pl_id, best)
+                    extra_plassembler[pl_id] = best
+                # Otherwise keep previous choice (it's better or equal)
+            else:
+                # First plassembler to claim this autocycler
+                autocycler_choices[target] = (pl_id, best)
+                extra_plassembler[pl_id] = best
             decision_rows.append([
                 pl_id, target, f"{best['ident']:.4f}", f"{best['cov']:.4f}",
                 "plassembler", "plassembler preferred (circular or longer)"
@@ -218,10 +327,22 @@ def main():
 
         # Case 2: Autocycler version is better or equal (use it, ignore plassembler)
         elif decision == "autocycler":
+            plas_m = plas_meta[pl_id]
+
+            # Ensure target metadata exists before updating (safety check)
+            if target not in updated_auto_meta:
+                updated_auto_meta[target] = {}
+
+            # Merge useful metadata from plassembler into autocycler version
+            # Copy both plasmid copy-number estimates from plassembler
+            for key in ["plasmid_copy_number_short", "plasmid_copy_number_long"]:
+                if key in plas_m:
+                    updated_auto_meta[target][key] = plas_m[key]
+
             # Keep autocycler version, discard plassembler
             decision_rows.append([
                 pl_id, target, f"{best['ident']:.4f}", f"{best['cov']:.4f}",
-                "autocycler", "autocycler preferred (circular or longer)"
+                "autocycler", "autocycler preferred (circular or longer); copied short/long copy numbers"
             ])
 
         # Case 3: Same length sequences - keep autocycler but copy plasmid copy-number metadata
@@ -247,6 +368,11 @@ def main():
         # Error case: Unexpected decision value (should never happen)
         else:
             raise ValueError(f"Unexpected decision value for {pl_id}: {decision}")
+    
+    # Remove autocycler sequences that were chosen as plassembler replacements
+    for target, (chosen_pl_id, best_align) in autocycler_choices.items():
+        if target in chosen_autocycler:
+            chosen_autocycler.remove(target)
 
     # ===== Build final merged assembly =====
     final_records = []  # Accumulate all sequences for final output
