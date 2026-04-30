@@ -19,13 +19,13 @@ task reorient {
         -o out \
         -t ~{cpu}
         # rename output
-        mv out/dnaapler_reoriented.fasta ~{id}.dnaapler.fasta
+        mv out/dnaapler_reoriented.fasta ~{id}.fasta
         mv out/dnaapler_all_reorientation_summary.tsv ~{id}.dnaapler_summary.tsv 
     >>>
 
     output {
         String dnaapler_version = read_string("VERSION")
-        File reoriented_fasta = "~{id}.dnaapler.fasta"
+        File reoriented_fasta = "~{id}.fasta"
         File dnaapler_summary = "~{id}.dnaapler_summary.tsv"
     }
 
