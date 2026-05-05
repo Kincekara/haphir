@@ -19,6 +19,7 @@ task downsample {
         --coverage 110 \
         --genome-size ~{genome_size} \
         --output ~{id}.downsampled.fastq.gz \
+        --output-format fastq \
         ~{long_fq}
     >>>
 
@@ -28,7 +29,7 @@ task downsample {
     }
 
     runtime {
-        docker: "staphb/rasusa:4.0.0"
+        docker: "staphb/rasusa:4.1.0"
         cpu: 2
         memory: "2 GiB"
         preemptible: 0
@@ -63,7 +64,7 @@ task downsample_pe {
     }
 
     runtime {
-        docker: "staphb/rasusa:4.0.0"
+        docker: "staphb/rasusa:4.1.0"
         cpu: 2
         memory: "2 GiB"
         preemptible: 0
