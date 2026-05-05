@@ -1,6 +1,5 @@
 version 1.0
 
-import "../tasks/task_pbtk.wdl" as pbtk
 import "../tasks/task_lrge.wdl" as lrge
 import "../tasks/task_rasusa.wdl" as rasusa
 import "../tasks/task_hifiasm.wdl" as hifiasm
@@ -67,28 +66,17 @@ workflow haphir {
         Boolean amrfinder = false
     }
 
-    # convert to fastq if bam file is provided
-    String filename = basename(long_fq)
-
-    if (sub(filename, ".bam", "") != filename) {
-        call pbtk.bam_to_fastq {
-            input:
-                id = id,
-                bam = long_fq
-        }
-    }
-
     # estimate genome size
     call lrge.estimate_genome_size {
         input: 
-            long_fq = select_first([bam_to_fastq.long_fq,long_fq])
+            long_fq = long_fq
     }
 
     # downsample reads
     call rasusa.downsample {
         input:
             id = id,
-            long_fq = select_first([bam_to_fastq.long_fq,long_fq]),
+            long_fq = long_fq,
             genome_size = estimate_genome_size.genome_size
     }
 
@@ -208,7 +196,7 @@ workflow haphir {
             final_asm = reorient.reoriented_fasta
     }
 
-    if ( bakta_annotation  || amrfinder ) {
+    if ( bakta_annotation || amrfinder ) {
         call bakta.annotation {
             input:
                 id = id,
@@ -231,7 +219,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.5.1"
+        String version = "HAPHiR v0.6.0"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
@@ -255,8 +243,8 @@ workflow haphir {
         # amrfinderplus
         File? amrfinder_report = amr.amrfinder_report
         # program versions
-        Array[String] program_versions = [ "bam2fastq: " + select_first([bam_to_fastq.bam2fastq_version, "NA"]),
-                                "lrge: " + estimate_genome_size.lrge_version,
+        Array[String] program_versions = [ "lrge: " + estimate_genome_size.lrge_version,
+                                "rasusa: " + downsample.rasusa_version,
                                 "flye: " + flye_asm.flye_version,
                                 "hifiasm: " + hifiasm_asm.hifiasm_version,
                                 "wtdbg2: " + wtdbg2_asm.wtdbg2_version,
