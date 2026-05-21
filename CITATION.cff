@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+- family-names: "Incekara"
+  given-names: "Kutluhan"
+  orcid: "https://orcid.org/0000-0001-7915-9847"
+title: "HAPHiR: Hybrid Assembly of PacBio HiFi and Illumina Reads"
+abstract: "HAPHiR performs high‑quality bacterial genome assembly using PacBio HiFi long reads and Illumina short reads, combining accuracy, robustness, and efficient cloud execution."
+keywords:
+- "bacterial genome assembly"
+- "PacBio Hifi"
+- "hybrid assembly"
+- "plasmids"
+- "bioinformatics pipeline"
+license: "MIT"
+repository-code: "https://github.com/Kincekara/haphir"
+doi: 10.5281/zenodo.19698295
+date-released: 2026-05-21
+url: "https://github.com/Kincekara/haphir"
