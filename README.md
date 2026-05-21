@@ -27,53 +27,11 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 - **Cloud-ready**: Designed for scalable execution on Terra
 - **Containerized**: All tools run in Docker containers for reproducibility
 
-## Quick Start
+## Terra
 
-### Prerequisites
+- The pipelien available as a [Dockstore workflow](https://dockstore.org/workflows/github.com/Kincekara/haphir/HAPHiR) that can be imported directly into Terra for cloud execution.
 
-- Docker or another supported container runtime
-- `miniwdl` for local workflow execution
-- Java 8+ for Cromwell/WOMtool validation
-- Optional: Terra account for cloud execution
-
-### Single Sample Assembly
-
-Use the single-sample workflow `workflows/wf_haphir.wdl`:
-
-```bash
-miniwdl run workflows/wf_haphir.wdl \
-  id=sample1 \
-  long_fq=sample1.hifi.fastq.gz \
-  short_fq1=sample1.R1.fastq.gz \
-  short_fq2=sample1.R2.fastq.gz
-```
-
-If `long_fq` is a BAM file, HAPHiR will automatically convert it to FASTQ before assembly.
-
-### Batch Processing
-
-Use `workflows/wf_haphir_batch.wdl` with a TSV sample sheet.
-
-Example `samples.tsv` formats:
-
-```
-# HiFi-only samples
-sample1	/path/to/sample1.hifi.fastq.gz
-sample2	/path/to/sample2.hifi.fastq.gz
-
-# Hybrid samples
-sample3	/path/to/sample3.hifi.fastq.gz	/path/to/sample3.R1.fastq.gz	/path/to/sample3.R2.fastq.gz
-```
-
-Run the batch workflow:
-
-```bash
-miniwdl run workflows/wf_haphir_batch.wdl samplesheet=samples.tsv
-```
-
-## Input Files
-
-### Single Sample Workflow (`workflows/wf_haphir.wdl`)
+### Inputs
 
 | Input | Type | Description |
 |-------|------|-------------|
@@ -85,24 +43,58 @@ miniwdl run workflows/wf_haphir_batch.wdl samplesheet=samples.tsv
 | `bakta_annotation` | Boolean | Run Bakta annotation (default: false) |
 | `amrfinder` | Boolean | Run AmrFinderPlus AMR detection (default: true) |
 
-### Batch Workflow (`workflows/wf_haphir_batch.wdl`)
+## Local Execution
 
-- `samplesheet` — a TSV file parsed by `read_tsv(samplesheet)`
-- Each row may contain either 2 columns (`id`, `long_fq`) or 4 columns (`id`, `long_fq`, `short_fq1`, `short_fq2`)
+### Installation
+
+```bash
+git clone https://github.com/Kincekara/haphir.git
+```
+
+### Single Sample Assembly
+
+Use the single-sample workflow `wf_haphir.wdl`:
+
+```bash
+miniwdl run ~/haphir/workflows/wf_haphir.wdl \
+  id=sample1 \
+  long_fq=sample1.hifi.fastq.gz \
+  [ short_fq1=sample1.R1.fastq.gz ] \
+  [ short_fq2=sample1.R2.fastq.gz ] \
+  [ organism="Escherichia coli" ] \
+  [ bakta=true ] \
+  [ amrfinder=true ]
+```
+Taxon name is optional and only used bakta annotation if enabled. If short reads are not provided, the workflow will skip plasmid recovery and polishing steps and only run the long-read assembly and consensus generation. Bakta and AmrFinderPlus can be enabled or disabled based on user preference.
+
+### Batch Processing
+
+For batch run, you can use `wf_haphir_batch.wdl` with a tab-seperated samplesheet as formatted like below. 
+
+Example `samplesheet.tsv` format:
+
+```tsv
+id  long_fq short_fq1	short_fq2 organism
+sample1 /path/to/sample1.hifi.bam  /path/to/sample1.R1.fastq.gz /path/to/sample1.R2.fastq.gz  Escherichia coli
+sample2 /path/to/sample2.hifi.fastq.gz  /path/to/sample2.R1.fastq.gz  /path/to/sample2.R2.fastq.gz
+sample3 /path/to/sample3.hifi.fastq.gz
+```
+
+Run the batch workflow:
+
+```bash
+miniwdl run /path/to/haphir/workflows/wf_haphir_batch.wdl \
+samplesheet=samplesheet.tsv 
+[ bakta=true ] \
+[ amrfinder=true ]
+```
+
 
 ## Pipeline Overview
 
-1. Convert input BAM to FASTQ if needed using `pbtk`
-2. Estimate genome size with `lrge`
-3. Downsample reads with `rasusa` for consistent long-read coverage
-4. Run Flye, Hifiasm, Wtdbg2, and Raven in parallel
-5. Generate a consensus assembly using `Autocycler`
-6. Recover plasmids with `Plassembler` when paired-end Illumina reads are provided
-7. Map plasmids to long read consensus with `Minimap2`, filter and merge plasmids.
-8. Polish with `Polypolish` when short reads are available
-9. Reorient the final assembly with `dnaapler`
-10. Create assembly visualizations with `Bandage`
-11. Optionally run `Bakta` annotation and `AmrFinderPlus` AMR detection
+<img src="assets/haphir.png" alt="HAPHiR Workflow Diagram" width="800"/>
+
+
 
 ## Output Files
 
