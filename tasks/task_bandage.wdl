@@ -24,7 +24,7 @@ task asm_image {
         Bandage image ~{raven_gfa} raven.png
         Bandage image ~{wtdbg2_asm} wtdbg2.png
         Bandage image ~{autocycler_gfa} autocycler.png
-        if [ -n "~{plassembler_gfa}" ]; then
+        if [ -s "~{plassembler_gfa}" ]; then
             Bandage image ~{plassembler_gfa} plassembler.png
         fi
         Bandage image ~{final_asm} final.png
