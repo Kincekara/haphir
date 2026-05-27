@@ -80,6 +80,9 @@ sample2 /path/to/sample2.hifi.fastq.gz  /path/to/sample2.R1.fastq.gz  /path/to/s
 sample3 /path/to/sample3.hifi.fastq.gz
 ```
 
+> [!WARNING]
+> the header and all columns are required but it may be left blank if not applicable. The workflow will automatically detect the presence of short reads and taxon name for each sample and adjust the processing steps accordingly. You may get `Array index out of bounds` error if the samplesheet is not properly formatted or if required columns are missing. The excel files also works when saved as tab-seperated text file.
+
 Run the batch workflow:
 
 ```bash
