@@ -65,7 +65,7 @@ miniwdl run ~/haphir/workflows/wf_haphir.wdl \
   [ bakta=true ] \
   [ amrfinder=true ]
 ```
-Taxon name is optional and only used bakta annotation if enabled. If short reads are not provided, the workflow will skip plasmid recovery and polishing steps and only run the long-read assembly and consensus generation. Bakta and AmrFinderPlus can be enabled or disabled based on user preference.
+Taxon name is optional and only used for bakta annotation and amrfinder if enabled. If short reads are not provided, the workflow will skip plasmid recovery and polishing steps and only run the long-read assembly and consensus generation. Bakta and AmrFinderPlus can be enabled or disabled based on user preference.
 
 ### Batch Processing
 
