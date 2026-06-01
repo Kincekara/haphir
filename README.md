@@ -10,13 +10,13 @@
 
 HAPHiR performs high‑quality bacterial genome assembly using PacBio HiFi long reads and Illumina short reads, combining accuracy, robustness, and efficient cloud execution.
 
-The workflow runs multiple long‑read assemblers in parallel (Flye, Hifiasm, Raven, wtdbg2) and generates a unified, high‑confidence consensus assembly using [Autocycler](https://github.com/rrwick/Autocycler). Small circular plasmids are recovered through a dedicated hybrid assembly step using [Plassembler](https://github.com/gbouras13/plassembler), ensuring both chromosomal and plasmid components are accurately reconstructed.
+The workflow runs multiple long‑read assemblers in parallel (Flye, Hifiasm, LJA, Raven) and generates a unified, high‑confidence consensus assembly using [Autocycler](https://github.com/rrwick/Autocycler). Small circular plasmids are recovered through a dedicated hybrid assembly step using [Plassembler](https://github.com/gbouras13/plassembler), ensuring both chromosomal and plasmid components are accurately reconstructed.
 
 HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), but can also be run locally using WDL executer such as [miniwdl](https://miniwdl.readthedocs.io/en/latest/) or [Cromwell](https://cromwell.readthedocs.io/en/latest/).
 
 ## Features
 
-- **Multi-assembler consensus**: Runs 4 independent long-read assemblers (Flye, Hifiasm, Wtdbg2, Raven) and combines them using Autocycler for enhanced accuracy
+- **Multi-assembler consensus**: Runs 4 independent long-read assemblers (Flye, Hifiasm, LJA, Raven) and combines them using Autocycler for enhanced accuracy
 - **HiFI only support**: Works with PacBio HiFi-only data or hybrid HiFi + Illumina data
 - **Plasmid recovery**: Dedicated plasmid assembly and recovery using Plassembler
 - **Flexible inputs**: Accepts PacBio BAM or FASTQ files, automatically converts as needed
@@ -45,6 +45,12 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 
 ## Local Execution
 
+### Requirements
+
+- [MiniWDL](https://miniwdl.readthedocs.io/en/latest/) or [Cromwell](https://cromwell.readthedocs.io/en/latest/) installed
+- A container engine (Docker, Apptainer, etc.) installed and running locally for container execution
+- 8+ CPU, 32+ GB RAM, and sufficient disk space for assemblies
+
 ### Installation
 
 ```bash
@@ -56,7 +62,7 @@ git clone https://github.com/Kincekara/haphir.git
 Use the single-sample workflow `wf_haphir.wdl`:
 
 ```bash
-miniwdl run ~/haphir/workflows/wf_haphir.wdl \
+miniwdl run /path/to/haphir/workflows/wf_haphir.wdl \
   id=sample1 \
   long_fq=sample1.hifi.fastq.gz \
   [ short_fq1=sample1.R1.fastq.gz ] \
