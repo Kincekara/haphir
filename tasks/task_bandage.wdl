@@ -6,7 +6,7 @@ task asm_image {
         File hifiasm_gfa
         File flye_gfa
         File raven_gfa
-        File wtdbg2_asm
+        File lja_gfa
         File autocycler_gfa
         File? plassembler_gfa
         File final_asm
@@ -22,7 +22,7 @@ task asm_image {
         Bandage image ~{hifiasm_gfa} hifiasm.png
         Bandage image ~{flye_gfa} flye.png
         Bandage image ~{raven_gfa} raven.png
-        Bandage image ~{wtdbg2_asm} wtdbg2.png
+        Bandage image ~{lja_gfa} lja.png
         Bandage image ~{autocycler_gfa} autocycler.png
         if [ -s "~{plassembler_gfa}" ]; then
             Bandage image ~{plassembler_gfa} plassembler.png
@@ -61,8 +61,8 @@ task asm_image {
                         <img src="data:image/png;base64,$(base64 -w 0 raven.png)" alt="Raven" />
                     </div>
                     <div class="grid-item">
-                        <div class="caption">Wtdbg2</div>
-                        <img src="data:image/png;base64,$(base64 -w 0 wtdbg2.png)" alt="Wtdbg2" />
+                        <div class="caption">LJA</div>
+                        <img src="data:image/png;base64,$(base64 -w 0 lja.png)" alt="LJA" />
                     </div>
                     <div class="grid-item">
                         <div class="caption">Autocycler</div>

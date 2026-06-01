@@ -4,7 +4,7 @@ import "../tasks/task_lrge.wdl" as lrge
 import "../tasks/task_rasusa.wdl" as rasusa
 import "../tasks/task_hifiasm.wdl" as hifiasm
 import "../tasks/task_flye.wdl" as flye
-import "../tasks/task_wtdbg2.wdl" as wtdbg2
+import "../tasks/task_lja.wdl" as lja
 import "../tasks/task_raven.wdl" as raven
 import "../tasks/task_autocycler.wdl" as autocycler
 import "../tasks/task_plassembler.wdl" as plassembler
@@ -96,14 +96,13 @@ workflow haphir {
             genome_size = estimate_genome_size.genome_size
     }
 
-    # wtdbg2
-    call wtdbg2.wtdbg2_asm {
+    # lja
+    call lja.lja_asm {
         input:
             id = id,
-            long_fq = downsample.downsampled_fq,
-            genome_size = estimate_genome_size.genome_size
+            long_fq = downsample.downsampled_fq
     }
-    
+
     # raven
     call raven.raven_asm {
         input:
@@ -117,7 +116,7 @@ workflow haphir {
             id = id,
             flye_asm = flye_asm.assembly_fasta,
             hifiasm_asm = hifiasm_asm.assembly_fasta,
-            wtdbg2_asm = wtdbg2_asm.assembly_fasta,
+            lja_asm = lja_asm.assembly_fasta,
             raven_asm = raven_asm.assembly_fasta
     }
 
@@ -190,7 +189,7 @@ workflow haphir {
             hifiasm_gfa = hifiasm_asm.assembly_graph,
             flye_gfa = flye_asm.assembly_graph,
             raven_gfa = raven_asm.assembly_graph,
-            wtdbg2_asm = wtdbg2_asm.assembly_fasta,
+            lja_gfa = lja_asm.assembly_graph,
             autocycler_gfa = combine_asms.assembly_graph,
             plassembler_gfa = plassembler_asm.graph,
             final_asm = reorient.reoriented_fasta
@@ -219,7 +218,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.6.1"
+        String version = "HAPHiR v0.7.0"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
@@ -247,7 +246,7 @@ workflow haphir {
                                 "rasusa: " + downsample.rasusa_version,
                                 "flye: " + flye_asm.flye_version,
                                 "hifiasm: " + hifiasm_asm.hifiasm_version,
-                                "wtdbg2: " + wtdbg2_asm.wtdbg2_version,
+                                "lja: " + lja_asm.lja_version,
                                 "raven: " + raven_asm.raven_version,
                                 "autocycler: " + combine_asms.autocycler_version,
                                 "fastp: " + select_first([trim_pe.fastp_version, "NA"]),
