@@ -5,7 +5,7 @@ task combine_asms {
         String id
         File flye_asm
         File hifiasm_asm
-        File lja_asm
+        File wtdbg2_asm
         File raven_asm
     }
 
@@ -17,7 +17,7 @@ task combine_asms {
 
         # collect assemblies
         mkdir assemblies
-        cp ~{hifiasm_asm} ~{flye_asm} ~{lja_asm} ~{raven_asm} assemblies/
+        cp ~{hifiasm_asm} ~{flye_asm} ~{wtdbg2_asm} ~{raven_asm} assemblies/
         # compress
         autocycler compress -i assemblies -a autocycler_out
         # cluster
