@@ -29,7 +29,7 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 
 ## Terra
 
-- The pipelien available as a [Dockstore workflow](https://dockstore.org/workflows/github.com/Kincekara/haphir/HAPHiR) that can be imported directly into Terra for cloud execution.
+- The pipeline is available as a [Dockstore workflow](https://dockstore.org/workflows/github.com/Kincekara/haphir/HAPHiR) that can be imported directly into Terra for cloud execution.
 
 ### Inputs
 
@@ -71,7 +71,8 @@ miniwdl run /path/to/haphir/workflows/wf_haphir.wdl \
   [ bakta=true ] \
   [ amrfinder=true ]
 ```
-Taxon name is optional and only used for bakta annotation and amrfinder if enabled. If short reads are not provided, the workflow will skip plasmid recovery and polishing steps and only run the long-read assembly and consensus generation. Bakta and AmrFinderPlus can be enabled or disabled based on user preference.
+>[!NOTE]
+>Taxon name is optional and only used for bakta annotation and amrfinder if enabled. If short reads are not provided, the workflow will skip plasmid recovery and polishing steps and only run the long-read assembly and consensus generation. Bakta and AmrFinderPlus can be enabled or disabled based on user preference.
 
 ### Batch Processing
 
@@ -87,7 +88,10 @@ sample3 /path/to/sample3.hifi.fastq.gz
 ```
 
 > [!WARNING]
-> the header and all columns are required but it may be left blank if not applicable. The workflow will automatically detect the presence of short reads and taxon name for each sample and adjust the processing steps accordingly. You may get `Array index out of bounds` error if the samplesheet is not properly formatted or if required columns are missing. The excel files also works when saved as tab-seperated text file.
+> The header and all columns are required but it may be left blank if not applicable. The workflow will automatically detect the presence of short reads and taxon name for each sample and adjust the processing steps accordingly. You may get `Array index out of bounds` error if the samplesheet is not properly formatted or if required columns are missing. 
+
+> [!TIP]
+> The excel files works when saved as tab-seperated text file.
 
 Run the batch workflow:
 
@@ -126,6 +130,7 @@ Primary outputs exposed by the workflow:
 | `amrfinder_report` | AmrFinderPlus report |
 | `program_versions` | Captured tool version strings |
 
+> [!NOTE]
 > Some outputs are only generated when paired Illumina reads are provided or when annotation/AMR detection is enabled.
 
 
