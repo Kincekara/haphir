@@ -10,13 +10,13 @@
 
 HAPHiR performs high‑quality bacterial genome assembly using PacBio HiFi long reads and Illumina short reads, combining accuracy, robustness, and efficient cloud execution.
 
-The workflow runs multiple long‑read assemblers in parallel (Flye, Hifiasm, LJA, Raven) and generates a unified, high‑confidence consensus assembly using [Autocycler](https://github.com/rrwick/Autocycler). Small circular plasmids are recovered through a dedicated hybrid assembly step using [Plassembler](https://github.com/gbouras13/plassembler), ensuring both chromosomal and plasmid components are accurately reconstructed.
+The workflow runs multiple long‑read assemblers in parallel (Flye, Hifiasm, Wtdbg2, Raven) and generates a unified, high‑confidence consensus assembly using [Autocycler](https://github.com/rrwick/Autocycler). Small circular plasmids are recovered through a dedicated hybrid assembly step using [Plassembler](https://github.com/gbouras13/plassembler), ensuring both chromosomal and plasmid components are accurately reconstructed.
 
 HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), but can also be run locally using WDL executer such as [miniwdl](https://miniwdl.readthedocs.io/en/latest/) or [Cromwell](https://cromwell.readthedocs.io/en/latest/).
 
 ## Features
 
-- **Multi-assembler consensus**: Runs 4 independent long-read assemblers (Flye, Hifiasm, LJA, Raven) and combines them using Autocycler for enhanced accuracy
+- **Multi-assembler consensus**: Runs 4 independent long-read assemblers (Flye, Hifiasm, Wtdbg2, Raven) and combines them using Autocycler for enhanced accuracy
 - **HiFI only support**: Works with PacBio HiFi-only data or hybrid HiFi + Illumina data
 - **Plasmid recovery**: Dedicated plasmid assembly and recovery using Plassembler
 - **Flexible inputs**: Accepts PacBio BAM or FASTQ files, automatically converts as needed
