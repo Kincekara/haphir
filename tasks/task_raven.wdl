@@ -16,16 +16,23 @@ task raven_asm {
         # assemble with raven
         raven \
         --threads ~{cpu} \
+        --identity 0.99 \
         --kmer-len 29 \
         --window-len 9 \
+        --polishing-rounds 1 \
         --graphical-fragment-assembly ~{id}.raven.gfa \
         ~{long_fq} > ~{id}.raven.fasta
+
+        # get contig lengths
+        echo "Raven" > ~{id}.raven.ctg_len.txt
+        awk -F'LN:i:' '/^>/{split($2,a," "); print a[1]}' ~{id}.raven.fasta | sort -nr >> ~{id}.raven.ctg_len.txt
     >>>
 
     output {
         String raven_version = read_string("VERSION")
         File assembly_graph = "~{id}.raven.gfa"
         File assembly_fasta = "~{id}.raven.fasta"
+        File ctg_len = "~{id}.raven.ctg_len.txt"
     }
 
     runtime {
