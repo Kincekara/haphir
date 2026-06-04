@@ -10,6 +10,13 @@ task asm_image {
         File autocycler_gfa
         File? plassembler_gfa
         File final_asm
+        File hifiasm_ctg_len
+        File flye_ctg_len
+        File raven_ctg_len
+        File wtdbg2_ctg_len
+        File autocycler_ctg_len
+        File? plassembler_ctg_len
+        File final_ctg_len
     }
 
     command <<< 
@@ -29,6 +36,30 @@ task asm_image {
         fi
         Bandage image ~{final_asm} final.png
 
+        # create tables of contig lengths
+        if [ -s "~{plassembler_ctg_len}" ]; then
+            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{wtdbg2_ctg_len} ~{autocycler_ctg_len} ~{plassembler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
+        else
+            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{wtdbg2_ctg_len} ~{autocycler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
+        fi
+        awk -F'\t' '
+        BEGIN {print "<table>"}
+        NR==1 {
+            print "  <tr>"
+            for (i = 1; i <= NF; i++) {
+                print "    <th>" $i "</th>"
+            }
+            print "  </tr>"
+            next
+        }
+        {
+            print "  <tr>"
+            for(i=1; i<=NF; i++) print "    <td>" $i "</td>"
+            print "  </tr>"
+        }
+        END {print "</table>"}' ctg_len_table.txt > table
+
+
         # write html file
         cat << EOF > ~{id}.bandage.html
         <html>
@@ -42,6 +73,9 @@ task asm_image {
                     .grid-item { border: 1px solid #ccc; padding: 10px; }
                     .grid-item .caption { margin-top: 8px; font-weight: bold; text-align: center; }
                     img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+                    table {font-family: arial, sans-serif; border-collapse: collapse; width: 100%; }
+                    td, th { border: 1px solid #dddddd; text-align: left; padding: 6px; }
+                    tr:nth-child(even) {  background-color: #dddddd; }
                 </style>            
             </head>
             <body>
@@ -72,6 +106,11 @@ task asm_image {
                         <div class="caption">Plassembler</div>
                         <img src="data:image/png;base64,$(base64 -w 0 plassembler.png)" alt="Plassembler">
                     </div>-->
+                </div>
+                <br><br>
+                <h2>Contig Lengths</h2>
+                <div class="table">
+                    $(cat table)
                 </div>
                 <br><br>
                 <h2>Final Assembly</h2>
