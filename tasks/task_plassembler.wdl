@@ -30,6 +30,10 @@ task plassembler_asm {
         --skip_qc \
         --prefix ~{id} \
         --outdir out
+
+        # get contig lengths
+        echo "Plassembler" > ~{id}.plassembler.ctg_len.txt
+        awk 'NR > 1 {print $2}' out/~{id}_summary.tsv >> ~{id}.plassembler.ctg_len.txt
     >>>
 
     output {
@@ -37,6 +41,7 @@ task plassembler_asm {
         File plasmids = "out/~{id}_plasmids.fasta"
         File graph = "out/~{id}_plasmids.gfa"
         File summary = "out/~{id}_summary.tsv"
+        File ctg_len = "~{id}.plassembler.ctg_len.txt"
     }
 
     runtime {

@@ -18,15 +18,21 @@ task reorient {
         -i ~{long_asm} \
         -o out \
         -t ~{cpu}
+        
         # rename output
         mv out/dnaapler_reoriented.fasta ~{id}.fasta
-        mv out/dnaapler_all_reorientation_summary.tsv ~{id}.dnaapler_summary.tsv 
+        mv out/dnaapler_all_reorientation_summary.tsv ~{id}.dnaapler_summary.tsv
+
+        # get contig lengths
+        echo "Final" > ~{id}.ctg_len.txt
+        awk -F'length=' '/^>/{split($2,a," "); print a[1]}' ~{id}.fasta | sort -nr >> ~{id}.ctg_len.txt
     >>>
 
     output {
         String dnaapler_version = read_string("VERSION")
         File reoriented_fasta = "~{id}.fasta"
         File dnaapler_summary = "~{id}.dnaapler_summary.tsv"
+        File ctg_len = "~{id}.ctg_len.txt"
     }
 
     runtime {

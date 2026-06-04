@@ -23,13 +23,18 @@ task hifiasm_asm {
 
         # gfa to fasta
         mv ~{id}.bp.p_ctg.gfa ~{id}.hifiasm.gfa
-        awk '/^S/{print ">"$2;print $3}' ~{id}.hifiasm.gfa > ~{id}.hifiasm.fasta
+        awk '/^S/{print ">"$2" length="length($3);print $3}' ~{id}.hifiasm.gfa > ~{id}.hifiasm.fasta
+
+        # get contig lengths
+        echo "Hifiasm" > ~{id}.hifiasm.ctg_len.txt
+        awk -F'length=' '/^>/{print $2}' ~{id}.hifiasm.fasta | sort -nr >> ~{id}.hifiasm.ctg_len.txt
     >>>
 
     output {
         String hifiasm_version = read_string("VERSION")
         File assembly_graph = "~{id}.hifiasm.gfa"
         File assembly_fasta = "~{id}.hifiasm.fasta"
+        File ctg_len = "~{id}.hifiasm.ctg_len.txt"
     }
 
     runtime {

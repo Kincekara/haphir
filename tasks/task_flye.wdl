@@ -25,6 +25,10 @@ task flye_asm {
         mv ./flye_out/assembly.fasta ~{id}.flye.fasta
         mv ./flye_out/assembly_graph.gfa ~{id}.flye.gfa
         mv ./flye_out/assembly_info.txt ~{id}.flye_info.txt
+
+        # get contig lengths
+        echo "Flye" > ~{id}.flye.ctg_len.txt
+        awk 'NR > 1 {print $2}' ~{id}.flye_info.txt >> ~{id}.flye.ctg_len.txt
     >>>
 
     output {
@@ -32,6 +36,7 @@ task flye_asm {
         File assembly_fasta = "~{id}.flye.fasta"
         File assembly_graph = "~{id}.flye.gfa"
         File assembly_info = "~{id}.flye_info.txt"
+        File ctg_len = "~{id}.flye.ctg_len.txt"
     }
 
     runtime {

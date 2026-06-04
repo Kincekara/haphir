@@ -193,8 +193,15 @@ workflow haphir {
             wtdbg2_asm = wtdbg2_asm.assembly_fasta,
             autocycler_gfa = combine_asms.assembly_graph,
             plassembler_gfa = plassembler_asm.graph,
-            final_asm = reorient.reoriented_fasta
-    }
+            final_asm = reorient.reoriented_fasta,
+            hifiasm_ctg_len = hifiasm_asm.ctg_len,
+            flye_ctg_len = flye_asm.ctg_len,
+            raven_ctg_len = raven_asm.ctg_len,
+            wtdbg2_ctg_len = wtdbg2_asm.ctg_len,
+            autocycler_ctg_len = combine_asms.ctg_len,
+            plassembler_ctg_len = plassembler_asm.ctg_len,
+            final_ctg_len = reorient.ctg_len
+        }
 
     if ( bakta_annotation || amrfinder ) {
         call bakta.annotation {
@@ -219,7 +226,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.6.1"
+        String version = "HAPHiR v0.7.0"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
