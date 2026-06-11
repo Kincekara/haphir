@@ -18,18 +18,31 @@ task plassembler_asm {
         plassembler --version | cut -d " " -f3 | tr -d "\n" > VERSION
 
         # plassembler
-        plassembler run \
-        --threads ~{cpu} \
-        --database /plassembler_db \
-        --pacbio_model pacbio-hifi \
-        --longreads ~{long_fq} \
-        --short_one ~{short_fq1} \
-        --short_two ~{short_fq2} \
-        --flye_assembly ~{flye_asm} \
-        --flye_info ~{flye_info} \
-        --skip_qc \
-        --prefix ~{id} \
-        --outdir out
+        if [ -s "~{short_fq1}" ] && [ -s "~{short_fq2}" ]; then
+            plassembler run \
+            --threads ~{cpu} \
+            --database /plassembler_db \
+            --pacbio_model pacbio-hifi \
+            --longreads ~{long_fq} \
+            --short_one ~{short_fq1} \
+            --short_two ~{short_fq2} \
+            --flye_assembly ~{flye_asm} \
+            --flye_info ~{flye_info} \
+            --skip_qc \
+            --prefix ~{id} \
+            --outdir out
+        else
+            plassembler long \
+            --threads ~{cpu} \
+            --database /plassembler_db \
+            --pacbio_model pacbio-hifi \
+            --longreads ~{long_fq} \
+            --flye_assembly ~{flye_asm} \
+            --flye_info ~{flye_info} \
+            --skip_qc \
+            --prefix ~{id} \
+            --outdir out
+        fi
 
         # get contig lengths
         echo "Plassembler" > ~{id}.plassembler.ctg_len.txt
@@ -45,9 +58,10 @@ task plassembler_asm {
     }
 
     runtime {
-        docker: "staphb/plassembler:1.8.2"
+        docker: "staphb/plassembler:1.8.1"
         cpu: cpu
         memory: "16 GiB"
+        disks: "local-disk 200 SSD"
         preemptible: 2
         maxRetries: 5
     }

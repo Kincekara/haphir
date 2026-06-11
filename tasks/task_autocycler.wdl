@@ -18,6 +18,9 @@ task combine_asms {
         # collect assemblies
         mkdir assemblies
         cp ~{hifiasm_asm} ~{flye_asm} ~{wtdbg2_asm} ~{raven_asm} assemblies/
+        # give contigs from Hifiasm and Flye extra consensus weight
+        sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*hifiasm.fasta
+        sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*flye.fasta
         # compress
         autocycler compress -i assemblies -a autocycler_out
         # cluster

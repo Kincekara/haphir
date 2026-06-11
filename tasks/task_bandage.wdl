@@ -8,7 +8,7 @@ task asm_image {
         File raven_gfa
         File wtdbg2_asm
         File autocycler_gfa
-        File? plassembler_gfa
+        File plassembler_gfa
         File final_asm
         File hifiasm_ctg_len
         File flye_ctg_len

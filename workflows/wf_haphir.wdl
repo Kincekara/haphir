@@ -121,7 +121,7 @@ workflow haphir {
             raven_asm = raven_asm.assembly_fasta
     }
 
-    # plasmid recovery & polishing
+    # prep short reads
     if (defined(short_fq1) && defined(short_fq2)) { 
         # rasusa
         call rasusa.downsample_pe {
@@ -137,36 +137,39 @@ workflow haphir {
                 id = id,
                 short_fq1 = downsample_pe.ds_short_fq1,
                 short_fq2 = downsample_pe.ds_short_fq2
-        }        
-        # plassembler
-        call plassembler.plassembler_asm {
-            input:
-                id = id,
-                long_fq = downsample.downsampled_fq,
-                short_fq1 = trim_pe.short_fq1_trimmed,
-                short_fq2 = trim_pe.short_fq2_trimmed,
-                flye_asm = flye_asm.assembly_fasta,
-                flye_info = flye_asm.assembly_info
         }
+    }
+
+    # plassembler
+    call plassembler.plassembler_asm {
+        input:
+            id = id,
+            long_fq = downsample.downsampled_fq,
+            short_fq1 = trim_pe.short_fq1_trimmed,
+            short_fq2 = trim_pe.short_fq2_trimmed,
+            flye_asm = flye_asm.assembly_fasta,
+            flye_info = flye_asm.assembly_info
+    }
     
-        # minimap2
-        call minimap2.label_and_align {
-            input:
-                id = id,
-                autocycler_asm = combine_asms.assembly_fasta,
-                plassembler_asm = plassembler_asm.plasmids
-        }
+    # minimap2
+    call minimap2.label_and_align {
+        input:
+            id = id,
+            autocycler_asm = combine_asms.assembly_fasta,
+            plassembler_asm = plassembler_asm.plasmids
+    }
 
-        # merge assemblies
-        call merge.merge_asms {
-            input:
-                id = id,
-                autocycler_asm = label_and_align.autocycler_fasta,
-                plassembler_asm = label_and_align.plasmids_fasta,
-                overlaps_paf = label_and_align.overlaps_paf
-        }
+    # merge assemblies
+    call merge.merge_asms {
+        input:
+            id = id,
+            autocycler_asm = label_and_align.autocycler_fasta,
+            plassembler_asm = label_and_align.plasmids_fasta,
+            overlaps_paf = label_and_align.overlaps_paf
+    }
 
-        # polypolish
+    # polypolish
+    if (defined(short_fq1) && defined(short_fq2)) { 
         call polypolish.polish {
             input:
                 id = id,
@@ -174,7 +177,7 @@ workflow haphir {
                 short_fq1 = trim_pe.short_fq1_trimmed,
                 short_fq2 = trim_pe.short_fq2_trimmed
         }
-    } 
+    }
 
     # dnaapler
     call dnaapler.reorient {
@@ -226,20 +229,20 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.7.0"
+        String version = "HAPHiR v0.8.0"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
         # fastp
         File? fastp_report = trim_pe.html_report
         # plassembler
-        File? plassembler_plasmids = plassembler_asm.plasmids
-        File? plassembler_graph = plassembler_asm.graph
-        File? plassembler_summary = plassembler_asm.summary
+        File plassembler_plasmids = plassembler_asm.plasmids
+        File plassembler_graph = plassembler_asm.graph
+        File plassembler_summary = plassembler_asm.summary
         # minimap2
-        File? minimap2_report = label_and_align.overlaps_paf
+        File minimap2_report = label_and_align.overlaps_paf
         # assembly merging 
-        File? merge_summary = merge_asms.merge_summary
+        File merge_summary = merge_asms.merge_summary
         # dnaapler
         File dnaapler_summary = reorient.dnaapler_summary
         File final_assembly = reorient.reoriented_fasta
@@ -258,8 +261,8 @@ workflow haphir {
                                 "raven: " + raven_asm.raven_version,
                                 "autocycler: " + combine_asms.autocycler_version,
                                 "fastp: " + select_first([trim_pe.fastp_version, "NA"]),
-                                "plassembler: " + select_first([plassembler_asm.plassembler_version, "NA"]),
-                                "minimap2: " + select_first([label_and_align.minimap_version, "NA"]),
+                                "plassembler: " + plassembler_asm.plassembler_version,
+                                "minimap2: " + label_and_align.minimap_version,
                                 "polypolish: " + select_first([polish.polypolish_version, "NA"]),
                                 "dnaapler: " + reorient.dnaapler_version,
                                 "bandage: " + asm_image.bandage_version,
