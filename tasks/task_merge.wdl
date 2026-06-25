@@ -446,6 +446,9 @@ task merge_asms {
     --coverage ~{coverage_threshold}
 
     mv merge_summary.tsv ~{id}.merge_summary.tsv
+
+    # fix fasta headers
+    sed -i 's/len=/length=/g' ~{id}.merged.fasta    
     >>>
 
     output {
