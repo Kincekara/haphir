@@ -183,7 +183,7 @@ workflow haphir {
     call dnaapler.reorient {
         input:
             id = id,
-            long_asm = select_first([polish.polished_fasta, combine_asms.assembly_fasta])
+            long_asm = select_first([polish.polished_fasta, merge_asms.merged_fasta])
     }
 
     # bandage
@@ -229,7 +229,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.9.0"
+        String version = "HAPHiR v0.9.1"
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
