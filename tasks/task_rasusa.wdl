@@ -11,7 +11,7 @@ task downsample {
         set -euo pipefail
 
         # version 
-        rasusa --version > VERSION
+        rasusa --version | cut -d " " -f2 > VERSION
         
         # downsample reads
         rasusa reads \
