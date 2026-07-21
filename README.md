@@ -6,7 +6,6 @@
 [![MiniWDL](https://img.shields.io/badge/MiniWDL-Workflow%20Engine-yellow)](https://miniwdl.readthedocs.io/en/latest/)
 [![CI](https://github.com/Kincekara/haphir/actions/workflows/check-wdl.yml/badge.svg)](https://github.com/Kincekara/haphir/actions/workflows/check-wdl.yml)
 
-***This repo is under development!***
 
 HAPHiR performs high‑quality bacterial genome assembly using PacBio HiFi long reads and Illumina short reads, combining accuracy, robustness, and efficient cloud execution.
 
