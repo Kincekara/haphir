@@ -58,7 +58,7 @@ task plassembler_asm {
     }
 
     runtime {
-        docker: "kincekara/plassembler:1.8.2-hififix"
+        docker: "staphb/plassembler:1.8.3"
         cpu: cpu
         memory: "16 GiB"
         disks: "local-disk 200 SSD"
