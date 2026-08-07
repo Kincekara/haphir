@@ -61,7 +61,7 @@ task plassembler_asm {
         docker: "staphb/plassembler:1.8.3"
         cpu: cpu
         memory: "16 GiB"
-        disks: "local-disk 200 SSD"
+        disks: "local-disk 300 SSD"
         preemptible: 2
         maxRetries: 5
     }
