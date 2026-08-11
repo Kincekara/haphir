@@ -16,7 +16,7 @@ task downsample {
         # downsample reads
         rasusa reads \
         --seed 42 \
-        --coverage 110 \
+        --coverage 100 \
         --genome-size ~{genome_size} \
         --output ~{id}.downsampled.fastq.gz \
         --output-format fastq \
@@ -51,7 +51,7 @@ task downsample_pe {
         # downsample pe reads
         rasusa reads \
         --seed 42 \
-        --coverage 110 \
+        --coverage 100 \
         --genome-size ~{genome_size} \
         -o ~{id}.downsampled.r1.fastq.gz \
         -o ~{id}.downsampled.r2.fastq.gz \
