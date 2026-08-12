@@ -15,28 +15,72 @@ task combine_asms {
         # version
         autocycler --version | cut -d " " -f2 > VERSION
 
+        # create helper functions
+        run_autocycler() {
+            local input_dir="$1" output_dir="$2" log_file="$3"
+            autocycler compress -i "$input_dir" -a "$output_dir"
+            autocycler cluster -a "$output_dir"
+            for c in "$output_dir"/clustering/qc_pass/cluster_*; do
+                [ -d "$c" ] || continue
+                autocycler trim -c "$c"
+                autocycler resolve -c "$c"
+            done
+            autocycler combine -a "$output_dir" -i "$output_dir"/clustering/qc_pass/cluster_*/5_final.gfa 2> "$log_file"
+        }
+
+        finalize_output() {
+            local src_prefix="$1" dst_prefix="$2"
+            if [ -f "$src_prefix".fasta ]; then
+                mv "$src_prefix".fasta "$dst_prefix".fasta
+            fi
+            if [ -f "$src_prefix".gfa ]; then
+                mv "$src_prefix".gfa "$dst_prefix".gfa
+            fi
+        }
+
+        clean_short_contigs() {
+            local input="$1" output="$2"
+            awk 'BEGIN {RS=">"; FS="\n"} NR>1 {seq=""; for (i=2; i<=NF; i++) seq=seq$i; if (length(seq) >= 2000) printf ">%s", $0}' "$input" > "$output"
+        }
+
         # collect assemblies
         mkdir assemblies
         cp ~{hifiasm_asm} ~{flye_asm} ~{wtdbg2_asm} ~{raven_asm} assemblies/
-        # give contigs from Hifiasm and Flye extra consensus weight
+        # give extra consensus weight to contigs from Hifiasm and Flye 
         sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*hifiasm.fasta
         sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*flye.fasta
-        # compress
-        autocycler compress -i assemblies -a autocycler_out
-        # cluster
-        autocycler cluster -a autocycler_out
-        # trim and resolve
-        for c in autocycler_out/clustering/qc_pass/cluster_*; do
-            autocycler trim -c "$c"
-            autocycler resolve -c "$c"
-        done
-        # combine
-        autocycler combine -a autocycler_out -i autocycler_out/clustering/qc_pass/cluster_*/5_final.gfa
 
-        # rename outputs
-        mv autocycler_out/consensus_assembly.fasta ~{id}.autocycler.fasta
-        mv autocycler_out/consensus_assembly.gfa ~{id}.autocycler.gfa
-        
+        run_autocycler "assemblies" "autocycler_out" "combine.log"
+
+        if grep -q "Consensus assembly is fully resolved" combine.log; then
+            echo "Consensus assembly is fully resolved"
+            finalize_output "autocycler_out/consensus_assembly" "~{id}.autocycler"
+        elif grep -q "One or more clusters failed to fully resolve" combine.log; then
+            echo "Checking chromosome..."
+            # check if chromosome is fully resolved
+            if head -n 1 autocycler_out/consensus_assembly.fasta | grep -q "circular"; then
+                echo "Chromosome is fully resolved, trying to clean up the assembly..."
+                clean_short_contigs "autocycler_out/consensus_assembly.fasta" "autocycler.clean.fasta"              
+                # rename outputs
+                mv autocycler.clean.fasta ~{id}.autocycler.fasta
+                mv autocycler_out/consensus_assembly.gfa ~{id}.autocycler.gfa
+            else
+                # Attempt 2
+                echo "Chromosome is not fully resolved, attempting to generate a consensus assembly again..."
+                mkdir assemblies2
+                cp assemblies/* assemblies2/
+                rm assemblies2/*.wtdbg2.fasta
+                run_autocycler "assemblies2" "autocycler_out2" "combine2.log"
+                if grep -q "Consensus assembly is fully resolved" combine2.log; then
+                    echo "Consensus assembly is fully resolved"
+                    finalize_output "autocycler_out2/consensus_assembly" "~{id}.autocycler"
+                else
+                    echo "Second consensus attempt failed, taking the first assembly as the final assembly"
+                    finalize_output "autocycler_out/consensus_assembly" "~{id}.autocycler"                
+                fi            
+            fi
+        fi              
+
         # get contig lengths
         echo "Autocycler" > ~{id}.autocycler.ctg_len.txt
         awk -F'length=' '/^>/{split($2,a," "); print a[1]}' ~{id}.autocycler.fasta | sort -nr >> ~{id}.autocycler.ctg_len.txt
