@@ -5,8 +5,8 @@ task combine_asms {
         String id
         File flye_asm
         File hifiasm_asm
-        File wtdbg2_asm
         File raven_asm
+        File opt_asm
     }
 
     command <<<
@@ -45,16 +45,20 @@ task combine_asms {
 
         # collect assemblies
         mkdir assemblies
-        cp ~{hifiasm_asm} ~{flye_asm} ~{wtdbg2_asm} ~{raven_asm} assemblies/
+        cp ~{hifiasm_asm} ~{flye_asm} ~{raven_asm} ~{opt_asm} assemblies/
+
         # give extra consensus weight to contigs from Hifiasm and Flye 
         sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*hifiasm.fasta
         sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*flye.fasta
-
+        
+        # run autocycler
         run_autocycler "assemblies" "autocycler_out" "combine.log"
-
+        
+        # check if consensus assembly is fully resolved
         if grep -q "Consensus assembly is fully resolved" combine.log; then
             echo "Consensus assembly is fully resolved"
             finalize_output "autocycler_out/consensus_assembly" "~{id}.autocycler"
+            echo "SUCCESS" > RESULT
         elif grep -q "One or more clusters failed to fully resolve" combine.log; then
             echo "Checking chromosome..."
             # check if chromosome is fully resolved
@@ -64,21 +68,15 @@ task combine_asms {
                 # rename outputs
                 mv autocycler.clean.fasta ~{id}.autocycler.fasta
                 mv autocycler_out/consensus_assembly.gfa ~{id}.autocycler.gfa
+                echo "SUCCESS" > RESULT 
             else
-                # Attempt 2
-                echo "Chromosome is not fully resolved, attempting to generate a consensus assembly again..."
-                mkdir assemblies2
-                cp assemblies/* assemblies2/
-                rm assemblies2/*.wtdbg2.fasta
-                run_autocycler "assemblies2" "autocycler_out2" "combine2.log"
-                if grep -q "Consensus assembly is fully resolved" combine2.log; then
-                    echo "Consensus assembly is fully resolved"
-                    finalize_output "autocycler_out2/consensus_assembly" "~{id}.autocycler"
-                else
-                    echo "Second consensus attempt failed, taking the first assembly as the final assembly"
-                    finalize_output "autocycler_out/consensus_assembly" "~{id}.autocycler"                
-                fi            
+                echo "Chromosome is not fully resolved, assembly failed"
+                finalize_output "autocycler_out/consensus_assembly" "~{id}.autocycler"
+                echo "FAIL" > RESULT       
             fi
+        else
+            echo "Autocycler failed to produce a consensus assembly"
+            echo "FAIL" > RESULT
         fi              
 
         # get contig lengths
@@ -91,6 +89,7 @@ task combine_asms {
         File assembly_fasta = "~{id}.autocycler.fasta"
         File assembly_graph = "~{id}.autocycler.gfa"
         File ctg_len = "~{id}.autocycler.ctg_len.txt"
+        String autocycler_result = read_string("RESULT")
     }
 
     runtime {

@@ -6,6 +6,8 @@ import "../tasks/task_hifiasm.wdl" as hifiasm
 import "../tasks/task_flye.wdl" as flye
 import "../tasks/task_wtdbg2.wdl" as wtdbg2
 import "../tasks/task_raven.wdl" as raven
+import "../tasks/task_canu.wdl" as canu
+import "../tasks/task_lja.wdl" as lja
 import "../tasks/task_autocycler.wdl" as autocycler
 import "../tasks/task_plassembler.wdl" as plassembler
 import "../tasks/task_fastp.wdl" as fastp
@@ -64,6 +66,7 @@ workflow haphir {
         String? organism
         Boolean bakta_annotation = false
         Boolean amrfinder = false
+        Array[String] assembly_option = ["wtdbg2", "canu", "lja"]
     }
 
     # estimate genome size
@@ -96,31 +99,137 @@ workflow haphir {
             genome_size = estimate_genome_size.genome_size
     }
 
-    # wtdbg2
-    call wtdbg2.wtdbg2_asm {
-        input:
-            id = id,
-            long_fq = downsample.downsampled_fq,
-            genome_size = estimate_genome_size.genome_size
-    }
-    
     # raven
     call raven.raven_asm {
         input:
             id = id,
             long_fq = downsample.downsampled_fq
     }
+    
+    # ==================== OPTION 1 / ATTEMPT 1 ====================
+    # wtdbg2
+    if (assembly_option[0] == "wtdbg2") {
+        call wtdbg2.wtdbg2_asm as wtdbg2_opt1 {
+            input:
+                id = id,
+                long_fq = downsample.downsampled_fq,
+                genome_size = estimate_genome_size.genome_size
+        }
+    }
+
+    if (assembly_option[0] == "canu") {
+        call canu.hicanu_asm as hicanu_opt1 {
+            input:
+                id = id,
+                long_fq = downsample.downsampled_fq,
+                genome_size = estimate_genome_size.genome_size
+        }
+    }
+    
+    if (assembly_option[0] == "lja") {
+        call lja.lja_asm as lja_opt1 {
+            input:
+                id = id,
+                long_fq = downsample.downsampled_fq
+        }
+    }
+
+    File opt1_asm = select_first([wtdbg2_opt1.assembly_fasta, hicanu_opt1.assembly_fasta, lja_opt1.assembly_fasta])
 
     # autocycler
-    call autocycler.combine_asms {
+    call autocycler.combine_asms as autocycler_attempt1 {
         input:
             id = id,
             flye_asm = flye_asm.assembly_fasta,
-            hifiasm_asm = hifiasm_asm.assembly_fasta,
-            wtdbg2_asm = wtdbg2_asm.assembly_fasta,
-            raven_asm = raven_asm.assembly_fasta
+            hifiasm_asm = hifiasm_asm.assembly_fasta,            
+            raven_asm = raven_asm.assembly_fasta,
+            opt_asm = opt1_asm
     }
 
+    # ==================== OPTION 2 / ATTEMPT 2 ====================
+    if (autocycler_attempt1.autocycler_result == "FAIL") {
+        # wtdbg2
+        if (assembly_option[1] == "wtdbg2") {
+            call wtdbg2.wtdbg2_asm as wtdbg2_opt2 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq,
+                    genome_size = estimate_genome_size.genome_size
+            }
+        }
+
+        if (assembly_option[1] == "canu") {
+            call canu.hicanu_asm as hicanu_opt2 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq,
+                    genome_size = estimate_genome_size.genome_size
+            }
+        }
+    
+        if (assembly_option[1] == "lja") {
+            call lja.lja_asm as lja_opt2 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq
+            }
+        }
+
+        File opt2_asm = select_first([wtdbg2_opt2.assembly_fasta, hicanu_opt2.assembly_fasta, lja_opt2.assembly_fasta])
+
+        # autocycler
+        call autocycler.combine_asms as autocycler_attempt2 {
+            input:
+                id = id,
+                flye_asm = flye_asm.assembly_fasta,
+                hifiasm_asm = hifiasm_asm.assembly_fasta,            
+                raven_asm = raven_asm.assembly_fasta,
+                opt_asm = opt2_asm
+        }
+    }
+    # ==================== OPTION 3 / ATTEMPT 3 ====================
+    if ((autocycler_attempt1.autocycler_result == "FAIL") && (autocycler_attempt2.autocycler_result == "FAIL")) {
+        # wtdbg2
+        if (assembly_option[2] == "wtdbg2") {
+            call wtdbg2.wtdbg2_asm as wtdbg2_opt3 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq,
+                    genome_size = estimate_genome_size.genome_size
+            }
+        }
+
+        if (assembly_option[2] == "canu") {
+            call canu.hicanu_asm as hicanu_opt3 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq,
+                    genome_size = estimate_genome_size.genome_size
+            }
+        }
+    
+        if (assembly_option[2] == "lja") {
+            call lja.lja_asm as lja_opt3 {
+                input:
+                    id = id,
+                    long_fq = downsample.downsampled_fq
+            }
+        }
+
+        File opt3_asm = select_first([wtdbg2_opt3.assembly_fasta, hicanu_opt3.assembly_fasta, lja_opt3.assembly_fasta])
+
+        # autocycler
+        call autocycler.combine_asms as autocycler_attempt3 {
+            input:
+                id = id,
+                flye_asm = flye_asm.assembly_fasta,
+                hifiasm_asm = hifiasm_asm.assembly_fasta,            
+                raven_asm = raven_asm.assembly_fasta,
+                opt_asm = opt3_asm
+        }
+    }
+    # ==================== END OF AUTOCYCLER ATTEMPTS ====================   
+    
     # prep short reads
     if (defined(short_fq1) && defined(short_fq2)) { 
         # rasusa
@@ -155,7 +264,7 @@ workflow haphir {
     call minimap2.label_and_align {
         input:
             id = id,
-            autocycler_asm = combine_asms.assembly_fasta,
+            autocycler_asm = select_first([autocycler_attempt3.assembly_fasta, autocycler_attempt2.assembly_fasta, autocycler_attempt1.assembly_fasta]),
             plassembler_asm = plassembler_asm.plasmids
     }
 
@@ -193,15 +302,19 @@ workflow haphir {
             hifiasm_gfa = hifiasm_asm.assembly_graph,
             flye_gfa = flye_asm.assembly_graph,
             raven_gfa = raven_asm.assembly_graph,
-            wtdbg2_asm = wtdbg2_asm.assembly_fasta,
-            autocycler_gfa = combine_asms.assembly_graph,
+            opt_gfa = select_first([wtdbg2_opt3.assembly_fasta, hicanu_opt3.assembly_fasta, lja_opt3.assembly_graph,
+                                    wtdbg2_opt2.assembly_fasta, hicanu_opt2.assembly_fasta, lja_opt2.assembly_graph,
+                                    wtdbg2_opt1.assembly_fasta, hicanu_opt1.assembly_fasta, lja_opt1.assembly_graph]),
+            autocycler_gfa = select_first([autocycler_attempt3.assembly_graph, autocycler_attempt2.assembly_graph, autocycler_attempt1.assembly_graph]),
             plassembler_gfa = plassembler_asm.graph,
             final_asm = reorient.reoriented_fasta,
             hifiasm_ctg_len = hifiasm_asm.ctg_len,
             flye_ctg_len = flye_asm.ctg_len,
             raven_ctg_len = raven_asm.ctg_len,
-            wtdbg2_ctg_len = wtdbg2_asm.ctg_len,
-            autocycler_ctg_len = combine_asms.ctg_len,
+            opt_ctg_len = select_first([wtdbg2_opt3.ctg_len, hicanu_opt3.ctg_len, lja_opt3.ctg_len,
+                                        wtdbg2_opt2.ctg_len, hicanu_opt2.ctg_len, lja_opt2.ctg_len,
+                                        wtdbg2_opt1.ctg_len, hicanu_opt1.ctg_len, lja_opt1.ctg_len]),
+            autocycler_ctg_len = select_first([autocycler_attempt3.ctg_len, autocycler_attempt2.ctg_len, autocycler_attempt1.ctg_len]),
             plassembler_ctg_len = plassembler_asm.ctg_len,
             final_ctg_len = reorient.ctg_len
         }
@@ -229,13 +342,13 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.11.1"
+        String version = "HAPHiR v0.12.0"
         # rasusa
         String est_longfq_cov = downsample.coverage
         String? est_shortfq_cov = downsample_pe.coverage
         # autocycler
-        File autocycler_assembly = combine_asms.assembly_fasta
-        File autocycler_graph = combine_asms.assembly_graph
+        File autocycler_assembly = select_first([autocycler_attempt3.assembly_fasta, autocycler_attempt2.assembly_fasta, autocycler_attempt1.assembly_fasta])
+        File autocycler_graph = select_first([autocycler_attempt3.assembly_graph, autocycler_attempt2.assembly_graph, autocycler_attempt1.assembly_graph])
         # fastp
         File? fastp_report = trim_pe.html_report
         # plassembler
@@ -260,9 +373,11 @@ workflow haphir {
                                 "rasusa: " + downsample.rasusa_version,
                                 "flye: " + flye_asm.flye_version,
                                 "hifiasm: " + hifiasm_asm.hifiasm_version,
-                                "wtdbg2: " + wtdbg2_asm.wtdbg2_version,
+                                "wtdbg2: " + select_first([wtdbg2_opt3.wtdbg2_version, wtdbg2_opt2.wtdbg2_version, wtdbg2_opt1.wtdbg2_version, "NA"]),
+                                "canu: " + select_first([hicanu_opt3.canu_version, hicanu_opt2.canu_version, hicanu_opt1.canu_version, "NA"]),
+                                "lja: " + select_first([lja_opt3.lja_version, lja_opt2.lja_version, lja_opt1.lja_version, "NA"]),
                                 "raven: " + raven_asm.raven_version,
-                                "autocycler: " + combine_asms.autocycler_version,
+                                "autocycler: " + select_first([autocycler_attempt3.autocycler_version, autocycler_attempt2.autocycler_version, autocycler_attempt1.autocycler_version, "NA"]),
                                 "fastp: " + select_first([trim_pe.fastp_version, "NA"]),
                                 "plassembler: " + plassembler_asm.plassembler_version,
                                 "minimap2: " + label_and_align.minimap_version,

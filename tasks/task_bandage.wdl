@@ -6,14 +6,14 @@ task asm_image {
         File hifiasm_gfa
         File flye_gfa
         File raven_gfa
-        File wtdbg2_asm
+        File opt_gfa
         File autocycler_gfa
         File plassembler_gfa
         File final_asm
         File hifiasm_ctg_len
         File flye_ctg_len
         File raven_ctg_len
-        File wtdbg2_ctg_len
+        File opt_ctg_len
         File autocycler_ctg_len
         File? plassembler_ctg_len
         File final_ctg_len
@@ -25,11 +25,23 @@ task asm_image {
         # version
         Bandage --version | cut -d " " -f2 > VERSION
 
+        filename=$(basename ~{opt_gfa})
+        if [[ "$filename" == *"wtdbg2"* ]]; then
+            opt_asm_name="Wtdbg2"
+        elif [[ "$filename" == *"hicanu"* ]]; then
+            opt_asm_name="HiCanu"
+        elif [[ "$filename" == *"lja"* ]]; then
+            opt_asm_name="LJA"
+        else
+            opt_asm_name="Unknown"
+        fi
+
+
         # Bandage
         Bandage image ~{hifiasm_gfa} hifiasm.png
         Bandage image ~{flye_gfa} flye.png
         Bandage image ~{raven_gfa} raven.png
-        Bandage image ~{wtdbg2_asm} wtdbg2.png
+        Bandage image ~{opt_gfa} opt.png
         Bandage image ~{autocycler_gfa} autocycler.png
         if [ -s "~{plassembler_gfa}" ]; then
             Bandage image ~{plassembler_gfa} plassembler.png
@@ -38,9 +50,9 @@ task asm_image {
 
         # create tables of contig lengths
         if [ -s "~{plassembler_ctg_len}" ]; then
-            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{wtdbg2_ctg_len} ~{autocycler_ctg_len} ~{plassembler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
+            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{opt_ctg_len} ~{autocycler_ctg_len} ~{plassembler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
         else
-            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{wtdbg2_ctg_len} ~{autocycler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
+            paste ~{hifiasm_ctg_len} ~{flye_ctg_len} ~{raven_ctg_len} ~{opt_ctg_len} ~{autocycler_ctg_len} ~{final_ctg_len} > ctg_len_table.txt
         fi
         awk -F'\t' '
         BEGIN {print "<table>"}
@@ -95,8 +107,8 @@ task asm_image {
                         <img src="data:image/png;base64,$(base64 -w 0 raven.png)" alt="Raven" />
                     </div>
                     <div class="grid-item">
-                        <div class="caption">Wtdbg2</div>
-                        <img src="data:image/png;base64,$(base64 -w 0 wtdbg2.png)" alt="Wtdbg2" />
+                        <div class="caption">$opt_asm_name</div>
+                        <img src="data:image/png;base64,$(base64 -w 0 opt.png)" alt="$opt_asm_name" />
                     </div>
                     <div class="grid-item">
                         <div class="caption">Autocycler</div>
