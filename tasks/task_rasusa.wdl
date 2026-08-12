@@ -22,7 +22,8 @@ task downsample {
         --output-format fastq \
         ~{long_fq} 2>&1 | tee ~{id}.rasusa.log
 
-        grep "Input coverage" ~{id}.rasusa.log | awk '{print $4}' > COVERAGE
+        # get coverage
+        grep "Input coverage is" ~{id}.rasusa.log | awk '{print $(NF)}' > COVERAGE
     >>>
 
     output {
@@ -60,7 +61,8 @@ task downsample_pe {
         -o ~{id}.downsampled.r2.fastq.gz \
         ~{short_fq1} ~{short_fq2} 2>&1 | tee ~{id}.rasusa.log
 
-        grep "Input coverage" ~{id}.rasusa.log | awk '{print $4}' > COVERAGE
+        # get coverage
+        grep "Input coverage is" ~{id}.rasusa.log | awk '{print $(NF)}' > COVERAGE
     >>>
 
     output {        
