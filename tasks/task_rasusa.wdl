@@ -20,12 +20,15 @@ task downsample {
         --genome-size ~{genome_size} \
         --output ~{id}.downsampled.fastq.gz \
         --output-format fastq \
-        ~{long_fq}
+        ~{long_fq} 2>&1 | tee ~{id}.rasusa.log
+
+        grep "Input coverage" ~{id}.rasusa.log | awk '{print $4}' > COVERAGE
     >>>
 
     output {
         String rasusa_version = read_string("VERSION")
         File downsampled_fq = "~{id}.downsampled.fastq.gz"
+        String coverage = read_string("COVERAGE")
     }
 
     runtime {
@@ -55,12 +58,15 @@ task downsample_pe {
         --genome-size ~{genome_size} \
         -o ~{id}.downsampled.r1.fastq.gz \
         -o ~{id}.downsampled.r2.fastq.gz \
-        ~{short_fq1} ~{short_fq2}
+        ~{short_fq1} ~{short_fq2} 2>&1 | tee ~{id}.rasusa.log
+
+        grep "Input coverage" ~{id}.rasusa.log | awk '{print $4}' > COVERAGE
     >>>
 
-    output {
+    output {        
         File ds_short_fq1 = "~{id}.downsampled.r1.fastq.gz"
         File ds_short_fq2 = "~{id}.downsampled.r2.fastq.gz"
+        String coverage = read_string("COVERAGE")
     }
 
     runtime {

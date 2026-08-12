@@ -230,6 +230,9 @@ workflow haphir {
     output {
         # haphir version
         String version = "HAPHiR v0.11.1"
+        # rasusa
+        String est_longfq_cov = downsample.coverage
+        String? est_shortfq_cov = downsample_pe.coverage
         # autocycler
         File autocycler_assembly = combine_asms.assembly_fasta
         File autocycler_graph = combine_asms.assembly_graph
