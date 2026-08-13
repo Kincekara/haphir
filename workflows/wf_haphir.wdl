@@ -76,7 +76,7 @@ workflow haphir {
 
     # Presets    
     Array[Array[String]] assembly_presets = [["wtdbg2", "canu", "lja"],["canu", "lja", "wtdbg2"],["lja", "wtdbg2", "canu"]]
-    Array[String] assembly_option = assembly_presets[assembly_preset - 1]
+    Array[String] assembly_option = assembly_presets[(assembly_preset - 1)]
     
     # estimate genome size
     call lrge.estimate_genome_size {
