@@ -7,7 +7,8 @@ workflow batch {
         File samplesheet
         Array[Array[String]] inputSamples = read_tsv(samplesheet)
         Boolean bakta = false
-        Boolean amrfinder = false      
+        Boolean amrfinder = false
+        Int assembly_preset = 1      
     }
 
     scatter (idx in range(length(inputSamples))) {
@@ -30,7 +31,8 @@ workflow batch {
                         short_fq2 = short_fq2,
                         organism = organism,
                         bakta_annotation = bakta,
-                        amrfinder = amrfinder
+                        amrfinder = amrfinder,
+                        assembly_preset = assembly_preset
                 }
             }
 
@@ -41,7 +43,8 @@ workflow batch {
                         long_fq = long_fq,
                         organism = organism,
                         bakta_annotation = bakta,
-                        amrfinder = amrfinder
+                        amrfinder = amrfinder,
+                        assembly_preset = assembly_preset
                 }  
             }
         }
