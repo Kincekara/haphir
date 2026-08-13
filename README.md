@@ -41,6 +41,14 @@ HAPHiR is designed for cloud‑native execution on [Terra](https://terra.bio/), 
 | `organism` | String? | Taxonomic name used for annotation (optional) |
 | `bakta_annotation` | Boolean | Run Bakta annotation (default: false) |
 | `amrfinder` | Boolean | Run AmrFinderPlus AMR detection (default: true) |
+| `assembly_preset` | Int | Assembly preset number to determine the order of assemblers  (1, 2, or 3; default: 1) |
+
+>[!NOTE]
+> HAPHiR runs Flye, Hifiasm, and Raven assemblers in parallel by default. The fourth assembler can be selected from Wtdbg2, HiCanu, or LJA based on the `assembly_preset` input. The presets define the order in which the long-read assemblers are run, allowing users to prioritize specific assemblers based on their preferences or prior experience. In case of failure in generating a consensus assembly, the workflow will automatically retry with a different assembler combination based on the selected preset. The presets are defined as follows: 
+> - preset 1: Wtdbg2, Canu, LJA
+> - preset 2: Canu, LJA, Wtdbg2
+> - preset 3: LJA, Wtdbg2, Canu
+
 
 ## Local Execution
 

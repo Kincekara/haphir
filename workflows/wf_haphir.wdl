@@ -56,6 +56,11 @@ workflow haphir {
             patterns: ["true", "false"],
             default: "false"
         }
+        assembly_preset: {
+            description: "Assembly preset to determine the order of assembly tools",
+            patterns: ["1", "2", "3"],
+            default: "1"
+        }
     }
 
     input {
@@ -66,9 +71,13 @@ workflow haphir {
         String? organism
         Boolean bakta_annotation = false
         Boolean amrfinder = false
-        Array[String] assembly_option = ["wtdbg2", "canu", "lja"]
+        Int assembly_preset = 1
     }
 
+    # Presets    
+    Array[Array[String]] assembly_presets = [["wtdbg2", "canu", "lja"],["canu", "lja", "wtdbg2"],["lja", "wtdbg2", "canu"]]
+    Array[String] assembly_option = assembly_presets[assembly_preset - 1]
+    
     # estimate genome size
     call lrge.estimate_genome_size {
         input: 
