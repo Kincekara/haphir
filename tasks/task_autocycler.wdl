@@ -25,7 +25,7 @@ task combine_asms {
                 autocycler trim -c "$c"
                 autocycler resolve -c "$c"
             done
-            autocycler combine -a "$output_dir" -i "$output_dir"/clustering/qc_pass/cluster_*/5_final.gfa 2> "$log_file"
+            autocycler combine -a "$output_dir" -i "$output_dir"/clustering/qc_pass/cluster_*/5_final.gfa 2>&1 | tee "$log_file"
         }
 
         finalize_output() {
