@@ -160,7 +160,7 @@ task amr {
     }
 
     runtime {
-        docker: "staphb/ncbi-amrfinderplus:4.2.7-2026-05-15.1"
+        docker: "staphb/ncbi-amrfinderplus:4.2.7-2026-08-07.1"
         cpu: cpu
         memory: "8GiB"
     }
