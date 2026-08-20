@@ -8,7 +8,7 @@ workflow batch {
         Array[Array[String]] inputSamples = read_tsv(samplesheet)
         Boolean bakta = false
         Boolean amrfinder = false
-        Int assembly_preset = 1      
+        Int preset = 1      
     }
 
     scatter (idx in range(length(inputSamples))) {
@@ -32,7 +32,7 @@ workflow batch {
                         organism = organism,
                         bakta_annotation = bakta,
                         amrfinder = amrfinder,
-                        assembly_preset = assembly_preset
+                        preset = preset
                 }
             }
 
@@ -44,7 +44,7 @@ workflow batch {
                         organism = organism,
                         bakta_annotation = bakta,
                         amrfinder = amrfinder,
-                        assembly_preset = assembly_preset
+                        preset = preset
                 }  
             }
         }
