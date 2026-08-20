@@ -36,7 +36,7 @@ task reorient {
     }
 
     runtime {
-        docker: "staphb/dnaapler:1.3.0"
+        docker: "staphb/dnaapler:1.4.0"
         cpu: cpu
         memory: "8 GiB"
         disks: "local-disk 50 SSD"
