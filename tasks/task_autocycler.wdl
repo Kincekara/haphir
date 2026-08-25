@@ -48,8 +48,8 @@ task combine_asms {
         cp ~{hifiasm_asm} ~{flye_asm} ~{raven_asm} ~{opt_asm} assemblies/
 
         # give extra consensus weight to contigs from Hifiasm and Flye 
-        sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*hifiasm.fasta
-        sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*flye.fasta
+        # sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*hifiasm.fasta
+        # sed -i 's/^>.*$/& Autocycler_consensus_weight=2/' assemblies/*flye.fasta
         
         # run autocycler
         run_autocycler "assemblies" "autocycler_out" "combine.log"
