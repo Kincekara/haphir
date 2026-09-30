@@ -36,7 +36,7 @@ task polish {
     }
 
     runtime {
-        docker: "staphb/polypolish:0.6.1-bwa"
+        docker: "staphb/polypolish:0.7.1-bwa"
         cpu: cpu
         memory: "8 GiB"
         preemptible: 0
