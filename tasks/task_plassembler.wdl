@@ -58,7 +58,7 @@ task plassembler_asm {
     }
 
     runtime {
-        docker: "staphb/plassembler:1.8.3"
+        docker: "staphb/plassembler:1.8.5"
         cpu: cpu
         memory: "16 GiB"
         disks: "local-disk 300 SSD"
