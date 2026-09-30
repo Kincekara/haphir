@@ -351,7 +351,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.13.0"
+        String version = "HAPHiR v0.14.0"
         # rasusa
         String est_longfq_cov = downsample.coverage
         String? est_shortfq_cov = downsample_pe.coverage
