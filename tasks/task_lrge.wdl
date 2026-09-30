@@ -30,7 +30,7 @@ task estimate_genome_size {
     }
 
     runtime {
-        docker: "staphb/lrge:0.3.0"
+        docker: "staphb/lrge:1.0.0"
         cpu: cpu
         memory: "8 GiB"
         disks: "local-disk 50 HDD"
