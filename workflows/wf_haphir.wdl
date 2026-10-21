@@ -1,6 +1,7 @@
 version 1.0
 
 import "../tasks/task_lrge.wdl" as lrge
+import "../tasks/task_tgsfilter.wdl" as tgsfilter
 import "../tasks/task_rasusa.wdl" as rasusa
 import "../tasks/task_hifiasm.wdl" as hifiasm
 import "../tasks/task_flye.wdl" as flye
@@ -15,6 +16,7 @@ import "../tasks/task_polypolish.wdl" as polypolish
 import "../tasks/task_dnaapler.wdl" as dnaapler
 import "../tasks/task_minimap2.wdl" as minimap2
 import "../tasks/task_merge.wdl" as merge
+import "../tasks/task_merqury.wdl" as merqury
 import "../tasks/task_bandage.wdl" as bandage
 import "../tasks/task_bakta.wdl" as bakta
 import "../tasks/task_amrfinderplus.wdl" as amrfinderplus
@@ -84,11 +86,17 @@ workflow haphir {
             long_fq = long_fq
     }
 
+    call tgsfilter.filter {
+        input:
+            id = id,
+            long_fq = long_fq
+    }
+
     # downsample reads
     call rasusa.downsample {
         input:
             id = id,
-            long_fq = long_fq,
+            long_fq = filter.filtered_fq,
             genome_size = estimate_genome_size.genome_size
     }
 
@@ -241,20 +249,21 @@ workflow haphir {
     
     # prep short reads
     if (defined(short_fq1) && defined(short_fq2)) { 
-        # rasusa
-        call rasusa.downsample_pe {
-            input:
-                id = id,
-                short_fq1 = short_fq1,
-                short_fq2 = short_fq2,
-                genome_size = estimate_genome_size.genome_size
-        }
         # fastp
         call fastp.trim_pe {
             input:
                 id = id,
-                short_fq1 = downsample_pe.ds_short_fq1,
-                short_fq2 = downsample_pe.ds_short_fq2
+                short_fq1 = short_fq1,
+                short_fq2 = short_fq2
+        }
+
+        # rasusa
+        call rasusa.downsample_pe {
+            input:
+                id = id,
+                short_fq1 = trim_pe.short_fq1_trimmed,
+                short_fq2 = trim_pe.short_fq2_trimmed,
+                genome_size = estimate_genome_size.genome_size
         }
     }
 
@@ -263,8 +272,8 @@ workflow haphir {
         input:
             id = id,
             long_fq = downsample.downsampled_fq,
-            short_fq1 = trim_pe.short_fq1_trimmed,
-            short_fq2 = trim_pe.short_fq2_trimmed,
+            short_fq1 = downsample_pe.ds_short_fq1,
+            short_fq2 = downsample_pe.ds_short_fq2,
             flye_asm = flye_asm.assembly_fasta,
             flye_info = flye_asm.assembly_info
     }
@@ -292,8 +301,8 @@ workflow haphir {
             input:
                 id = id,
                 draft_asm = merge_asms.merged_fasta,
-                short_fq1 = trim_pe.short_fq1_trimmed,
-                short_fq2 = trim_pe.short_fq2_trimmed
+                short_fq1 = downsample_pe.ds_short_fq1,
+                short_fq2 = downsample_pe.ds_short_fq2,
         }
     }
 
@@ -328,6 +337,17 @@ workflow haphir {
             final_ctg_len = reorient.ctg_len
         }
 
+    # merqury
+    call merqury.asm_qc {
+        input:
+            id = id,
+            asm = reorient.reoriented_fasta,
+            long_fq = filter.filtered_fq,
+            short_fq1 = trim_pe.short_fq1_trimmed,
+            short_fq2 = trim_pe.short_fq2_trimmed
+
+    }
+
     if ( bakta_annotation || amrfinder ) {
         call bakta.annotation {
             input:
@@ -351,7 +371,9 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.14.0"
+        String version = "HAPHiR v0.15.0"
+        # tgsfilter
+        File tgsfilter_report = filter.html_report
         # rasusa
         String est_longfq_cov = downsample.coverage
         String? est_shortfq_cov = downsample_pe.coverage
@@ -373,12 +395,18 @@ workflow haphir {
         File final_assembly = reorient.reoriented_fasta
         # bandage
         File asm_viz = asm_image.bandage_html
+        # merqury
+        File merqury_report = asm_qc.merqury_html
+        String eval = asm_qc.eval
+        String completeness = asm_qc.completeness
+        String qv = asm_qc.qv
         # bakta
         File? bakta_outputs = annotation.bakta_outputs
         # amrfinderplus
         File? amrfinder_report = amr.amrfinder_report
         # program versions
         Array[String] program_versions = [ "lrge: " + estimate_genome_size.lrge_version,
+                                "tgsfilter: " + filter.tgsfilter_version,
                                 "rasusa: " + downsample.rasusa_version,
                                 "flye: " + flye_asm.flye_version,
                                 "hifiasm: " + hifiasm_asm.hifiasm_version,
@@ -393,6 +421,7 @@ workflow haphir {
                                 "polypolish: " + select_first([polish.polypolish_version, "NA"]),
                                 "dnaapler: " + reorient.dnaapler_version,
                                 "bandage: " + asm_image.bandage_version,
+                                "merqury: " + asm_qc.merqury_version,
                                 "bakta: " + select_first([annotation.bakta_version, "NA"]),
                                 "amrfinderplus: " + select_first([amr.amrfinder_version, "NA"])
                                 ]
