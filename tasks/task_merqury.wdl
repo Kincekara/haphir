@@ -184,7 +184,7 @@ task asm_qc {
     }
 
     runtime {
-        docker: "kincekara/merqury:1.4.1"
+        docker: "staphb/merqury:1.4.1"
         cpu: cpu
         memory: "8 GiB"
         preemptible: 0
