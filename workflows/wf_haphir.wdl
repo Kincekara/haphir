@@ -397,7 +397,7 @@ workflow haphir {
         File asm_viz = asm_image.bandage_html
         # merqury
         File merqury_report = asm_qc.merqury_html
-        String eval = asm_qc.eval
+        String qc_eval = asm_qc.eval
         String completeness = asm_qc.completeness
         String qv = asm_qc.qv
         # bakta
