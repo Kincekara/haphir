@@ -37,6 +37,7 @@ task filter {
         docker: "staphb/tgsfilter:1.11"
         cpu: cpu
         memory: "4 GiB"
+        disks: "local-disk 50 SSD"
         preemptible: 0
         maxRetries: 3
     }
