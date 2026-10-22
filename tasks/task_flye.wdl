@@ -44,7 +44,7 @@ task flye_asm {
         cpu: cpu
         memory: "8 GiB"
         disks: "local-disk 200 SSD"
-        preemptible: 2
-        maxRetries: 5
+        preemptible: 1
+        maxRetries: 3
     }
 }

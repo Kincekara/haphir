@@ -62,7 +62,7 @@ task plassembler_asm {
         cpu: cpu
         memory: "16 GiB"
         disks: "local-disk 300 SSD"
-        preemptible: 2
-        maxRetries: 5
+        preemptible: 1
+        maxRetries: 3
     }
 }
