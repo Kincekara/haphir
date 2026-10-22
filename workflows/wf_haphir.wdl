@@ -371,7 +371,7 @@ workflow haphir {
     # outputs
     output {
         # haphir version
-        String version = "HAPHiR v0.15.0"
+        String version = "HAPHiR v0.16.0"
         # tgsfilter
         File tgsfilter_report = filter.html_report
         # rasusa
