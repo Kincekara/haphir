@@ -42,7 +42,7 @@ task flye_asm {
     runtime {
         docker: "staphb/flye:2.9.6"
         cpu: cpu
-        memory: "16 GiB"
+        memory: "8 GiB"
         disks: "local-disk 200 SSD"
         preemptible: 2
         maxRetries: 5

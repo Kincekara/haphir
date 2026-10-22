@@ -5,7 +5,7 @@ task wtdbg2_asm {
         String id
         File long_fq
         String genome_size
-        Int cpu = 8
+        Int cpu = 4
     }
 
     command <<<
@@ -42,7 +42,7 @@ task wtdbg2_asm {
     runtime {
         docker: "staphb/wtdbg2:2.5-noble"
         cpu: cpu
-        memory: "16 GiB"
+        memory: "8 GiB"
         preemptible: 2
         maxRetries: 5
     }

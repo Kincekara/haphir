@@ -94,8 +94,8 @@ task combine_asms {
 
     runtime {
         docker: "staphb/autocycler:0.7.0"
-        cpu: 8
-        memory: "16 GiB"
+        cpu: 4
+        memory: "8 GiB"
         preemptible: 2
         maxRetries: 5
     }

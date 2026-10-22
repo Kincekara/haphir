@@ -38,7 +38,7 @@ task hicanu_asm {
     runtime {
         docker: "staphb/canu:2.3"
         cpu: cpu
-        memory: "32 GiB"
+        memory: "24 GiB"
         disks: "local-disk 200 SSD"
         preemptible: 2
         maxRetries: 5

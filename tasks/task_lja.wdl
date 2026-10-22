@@ -36,7 +36,7 @@ task lja_asm {
     runtime {
         docker: "staphb/lja:0.2-bugfix"
         cpu: cpu
-        memory: "32 GiB"
+        memory: "16 GiB"
         disks: "local-disk 200 SSD"
         preemptible: 2
         maxRetries: 5

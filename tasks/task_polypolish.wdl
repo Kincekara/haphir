@@ -6,7 +6,7 @@ task polish {
         File draft_asm
         File? short_fq1
         File? short_fq2
-        Int cpu = 4
+        Int cpu = 2
     }
 
     command <<<
@@ -38,7 +38,7 @@ task polish {
     runtime {
         docker: "staphb/polypolish:0.7.1-bwa"
         cpu: cpu
-        memory: "8 GiB"
+        memory: "2 GiB"
         preemptible: 0
         maxRetries: 3
     }

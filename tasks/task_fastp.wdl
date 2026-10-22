@@ -5,7 +5,7 @@ task trim_pe {
         String id
         File? short_fq1
         File? short_fq2
-        Int cpu = 4
+        Int cpu = 2
     }
 
     command <<<
@@ -45,7 +45,7 @@ task trim_pe {
     runtime {
         docker: "staphb/fastp:1.3.7"
         cpu: cpu
-        memory: "4 GiB"
+        memory: "2 GiB"
         preemptible: 0
         maxRetries: 3
     }

@@ -40,7 +40,7 @@ task hifiasm_asm {
     runtime {
         docker: "staphb/hifiasm:0.25.0"
         cpu: cpu
-        memory: "32 GiB"
+        memory: "24 GiB"
         disks: "local-disk 200 SSD"
         preemptible: 2
         maxRetries: 5

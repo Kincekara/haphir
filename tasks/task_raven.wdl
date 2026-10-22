@@ -38,7 +38,7 @@ task raven_asm {
     runtime {
         docker: "staphb/raven:1.8.3-noble"
         cpu: cpu
-        memory: "16 GiB"
+        memory: "8 GiB"
         preemptible: 2
         maxRetries: 5
     }

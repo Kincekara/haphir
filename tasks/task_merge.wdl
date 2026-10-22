@@ -459,7 +459,7 @@ task merge_asms {
     runtime {
         docker: "quay.io/biocontainers/biopython:1.84"
         cpu: 1
-        memory: "4 GiB"
+        memory: "1 GiB"
     }
 }
 
