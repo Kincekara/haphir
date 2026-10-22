@@ -36,6 +36,7 @@ task downsample {
         docker: "staphb/rasusa:5.1.0"
         cpu: 2
         memory: "2 GiB"
+        disks: "local-disk 50 SSD"
         preemptible: 0
         maxRetries: 3
     }

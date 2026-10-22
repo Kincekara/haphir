@@ -33,7 +33,7 @@ task estimate_genome_size {
         docker: "staphb/lrge:1.0.0"
         cpu: cpu
         memory: "8 GiB"
-        disks: "local-disk 50 HDD"
+        disks: "local-disk 50 SSD"
         preemptible: 0
         maxRetries: 3
     }

@@ -187,6 +187,7 @@ task asm_qc {
         docker: "staphb/merqury:1.4.1"
         cpu: cpu
         memory: "8 GiB"
+        disks: "local-disk 50 SSD"
         preemptible: 0
         maxRetries: 3
     }
