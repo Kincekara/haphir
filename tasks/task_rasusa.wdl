@@ -33,7 +33,7 @@ task downsample {
     }
 
     runtime {
-        docker: "staphb/rasusa:4.1.0"
+        docker: "staphb/rasusa:5.1.0"
         cpu: 2
         memory: "2 GiB"
         preemptible: 0
