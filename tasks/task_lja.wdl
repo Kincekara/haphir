@@ -13,17 +13,23 @@ task lja_asm {
         # assemble with lja
         lja \
         -t ~{cpu} \
+        -k 301 \
+        -K 2501 \
         -o out \
         --reads ~{long_fq} > lja.out.txt 2> lja.err.txt
 
-        # rename output
-        mv out/assembly.fasta ~{id}.lja.fasta
-        mv out/mdbg.gfa ~{id}.lja.gfa
-
-        # get contig lengths
-        echo "LJA" > ~{id}.lja.ctg_len.txt
-        awk '/^>/ {if (len) print len; len=0; next} {len += length($0)} END {if (len) print len}' ~{id}.lja.fasta | sort -nr >> ~{id}.lja.ctg_len.txt
-
+        if [ -s out/assembly.fasta ]; then            
+            echo "LJA assembly completed successfully" 
+            # rename output files       
+            mv out/assembly.fasta ~{id}.lja.fasta
+            mv out/mdbg.gfa ~{id}.lja.gfa
+            # get contig lengths
+            echo "LJA" > ~{id}.lja.ctg_len.txt
+            awk '/^>/ {if (len) print len; len=0; next} {len += length($0)} END {if (len) print len}' ~{id}.lja.fasta | sort -nr >> ~{id}.lja.ctg_len.txt
+        else
+            echo "LJA assembly failed: assembly.fasta is empty"
+            exit 1      
+        fi
     >>>
 
     output {
