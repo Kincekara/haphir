@@ -4,7 +4,7 @@ task filter {
     input {
         String id
         File long_fq
-        Int min_lenght = 0 # set 0 to disable length filtering, default 1000
+        Int min_length = 0 # set 0 to disable length filtering, default 1000
         Int bias = 100 # set 100 to disable base content bias correction, default 1
         Int cpu = 4
     }
@@ -17,7 +17,7 @@ task filter {
         tgsfilter \
         -t ~{cpu} \
         -x hifi \
-        -l ~{min_lenght} \
+        -l ~{min_length} \
         -b ~{bias} \
         -i ~{long_fq} \
         -o ~{id}.filtered.fastq.gz 2>&1 | tee ~{id}.tgsfilter.log
