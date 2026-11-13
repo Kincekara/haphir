@@ -62,7 +62,7 @@ task combine_asms {
         elif grep -q "One or more clusters failed to fully resolve" combine.log; then
             echo "Checking chromosome..."
             # check if chromosome is fully resolved
-            if head -n 1 autocycler_out/consensus_assembly.fasta | grep -q "circular"; then
+            if head -n 1 autocycler_out/consensus_assembly.fasta | grep -q "topology=circular"; then
                 echo "Chromosome is fully resolved, trying to clean up the assembly..."
                 clean_short_contigs "autocycler_out/consensus_assembly.fasta" "autocycler.clean.fasta"              
                 # rename outputs
@@ -93,7 +93,7 @@ task combine_asms {
     }
 
     runtime {
-        docker: "staphb/autocycler:0.7.0"
+        docker: "staphb/autocycler:0.8.0"
         cpu: 4
         memory: "8 GiB"
         preemptible: 2
